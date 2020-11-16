@@ -1,8 +1,8 @@
 #include "simulator.h"
 
-Instruction::Instruction(/* args */) {}
+Line::Line(/* args */) {}
 
-Instruction::~Instruction() {}
+Line::~Line() {}
 
 Simulator::Simulator(/* args */) {}
 
