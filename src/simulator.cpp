@@ -62,6 +62,16 @@ std::map<std::string, short> TYPE = {
 
 std::map<std::string, int> JUMP_LINE;
 
+inline int get_args(const char *args_str, char *arg) {
+    int len = strlen(args_str);
+    int i = 0;  // index of `arg_str`
+    int index = 0;  // index of `arg`
+    while (i < len && args_str[i] == ' ') ++i;
+    while (i < len && args_str[i] != ' ' && args_str[i] != ',') 
+        arg[index++] = args_str[i++];
+    return i + 1;
+}
+
 Line::Line(const short &t, const Num *args, const int &arg_n) {
     type = t;
     for (int i = 0; i < arg_n; ++i) arg[i] = args[i];
@@ -90,18 +100,18 @@ void Simulator::parse_file(const char *FILENAME) {
 
 void Simulator::parse(const char *script, Line &line, const int &current_line) {
     char name[Simulator::MAX_LINE_COL];  // instruction name
-    char arg[11];  // single argument
-    int args[3];  // arguments
+    // char arg[11];  // single argument
+    Num args[3];  // arguments
     int arg_i = 0;  // index of `arg`
     int args_i = 0;  // index of `args`
-    for (int j = 0; j < 11; ++j) args[j] = 0;  // initiate `arg`
-    int line_len = strlen(script);  // length of `line`
     int i = 0;  // index of `line`
+    int line_len = strlen(script);  // length of `line`
+    // for (int j = 0; j < 11; ++j) args[j] = 0;  // initiate `arg`
 
     // receive instruction name
     for (; i < line_len; ++i) {
         if (script[i] == ' ') {  // instrction name end
-            while (script[i] == ' ') ++i;  // skip spaces
+            // while (script[i] == ' ') ++i;  // skip spaces
             break;
         }
         if (script[i] == ':') {  // is line_ID
@@ -111,10 +121,73 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
         name[i] = script[i];  // add a character to `name`
     }
 
-    // TODO: receive arguments
+    // receive arguments and setup a new `Line`
+    char rd[5], rs[5], rs2[5], imm[11], line_id[101];  // TODO: set max length of line id
+    switch(TYPE[name]) {
+    case 1:  // load [rd],[rs]
+        int a = get_args(script + i, rd);  // shift backwards
+        get_args(script + i + a, rs);
+        args[0] = Num{false, REGISTER[rd]};
+        args[1] = Num{false, REGISTER[rs]};
+        line = Line(1, args, 2);
+        break;
+    case 2:  // store [rd],[rs]
+        int a = get_args(script + i, rd);  // shift backwards
+        get_args(script + i + a, rs);
+        args[0] = Num{false, REGISTER[rd]};
+        args[1] = Num{false, REGISTER[rs]};
+        line = Line(2, args, 2);
+        break;
+    case 3:  // push [rs]
+        get_args(script + i, rs);
+        args[0] = Num{false, REGISTER[rs]};
+        line = Line(3, args, 1);
+        break;
+    case 4:  // pop [rd]
+        get_args(script + i, rd);
+        args[0] = Num{false, REGISTER[rd]};
+        line = Line(4, args, 1);
+        break;
+    case 10:  // mov
+        break;
+    case 20:  // add
+        break;
+    case 21:  // sub
+        break;
+    case 22:  // mul
+        break;
+    case 23:  // div
+        break;
+    case 24:  // rem
+        break;
+    case 25:  // and
+        break;
+    case 26:  // or
+        break;
+    case 30:  // jal
+        break;
+    case 31:  // beq
+        break;
+    case 32:  // bne
+        break;
+    case 33:  // blt
+        break;
+    case 34:  // bge
+        break;
+    case 41:  // call
+        break;
+    case 42:  // ret
+        line = Line(42, args, 0);
+        break;
+    case 51:  // end
+        line = Line(51, args, 0);
+        break;
+    case 52:  // draw
+        line = Line(52, args, 0);
+        break;
+    default:
+        break;
+    }
 
-
-
-    // line = Line(name, args);
     return;
 }

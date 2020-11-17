@@ -35,6 +35,8 @@ class Line {
 #    define BGE         34
 #    define CALL        41
 #    define RET         42
+#    define END         51
+#    define DRAW        52
     short type;
     Num   arg[3];
 
