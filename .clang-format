@@ -19,6 +19,8 @@ AlignEscapedNewlinesLeft:	true
 AlignOperands:	true
 # 对齐连续的尾随的注释
 AlignTrailingComments:	true
+# 对齐连续的预处理
+AlignConsecutiveMacros: true
  
 # 允许函数声明的所有参数在放在下一行
 AllowAllParametersOfDeclarationOnNextLine:	false
