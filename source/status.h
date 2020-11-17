@@ -26,7 +26,6 @@ class Status {
     int &get_reg_ref(unsigned int pos);
 };
 
-
 #endif // __STATUS_H_
 
 

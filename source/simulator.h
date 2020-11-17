@@ -49,7 +49,7 @@ class Simulator {
   public:
     Simulator(/* args */);
     ~Simulator();
-    void parse(const char *FILENAME);
+    // void parse(const char *FILENAME);
     void parse(const char *script);
     void execute(unsigned int stop_line);
     void do_line(Line line);
