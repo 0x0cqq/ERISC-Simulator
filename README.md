@@ -21,3 +21,5 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 （三）期中、期末课程论文抄袭严重的；
 
 （四）在课程学习过程中严重弄虚作假的其他情形。
+
+wuwj20
