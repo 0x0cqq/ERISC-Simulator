@@ -3,3 +3,5 @@
 Status::Status(/* args */) {}
 
 Status::~Status() {}
+
+Status::mov(){ }
