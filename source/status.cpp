@@ -4,4 +4,6 @@ Status::Status(/* args */) {}
 
 Status::~Status() {}
 
-Status::mov(){ }
+void Status::mov(unsigned int &rd, unsigned int rs){
+    
+}
