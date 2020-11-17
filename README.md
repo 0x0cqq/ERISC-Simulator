@@ -6,6 +6,8 @@ ERISC（Extremely Reduced Instruction Set Computer, 极度精简指令集）的 
 
 A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which is the final project of the course "Fundamentals of Programming(30240233-2)" in Tsinghua University.
 
+rzh txdy
+
 ## 附录
 
 ### 清华大学学生纪律处分管理规定实施细则
