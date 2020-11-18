@@ -79,7 +79,7 @@ inline int get_arg(const char *args_str, char *arg) {
 // convert a string into a number (hex or dec)
 inline int strtoi(const char *s) {
     int num;
-    s[1] == 'x' ? sscanf(s, "%0x", &num)  // hex
+    s[1] == 'x' ? sscanf(s, "%x", &num)  // hex
                 : sscanf(s, "%d", &num);  // dec
     return num;
 }
@@ -89,8 +89,8 @@ inline void set_args_rd_rs(const char *args_str, Num *args) {
     char rd[5], rs[5];
     int a = get_arg(args_str, rd);  // shift backwards `a` chars
     get_arg(args_str + a, rs);
-    args[0] = Num{false, REGISTER[rd]};
-    args[1] = Num{false, REGISTER[rs]};
+    args[0] = Num{false, (unsigned int)REGISTER[rd]};
+    args[1] = Num{false, (unsigned int)REGISTER[rs]};
     return;
 }
 
@@ -98,7 +98,7 @@ inline void set_args_rd_rs(const char *args_str, Num *args) {
 inline void set_args_r(const char *args_str, Num *args) {
     char r[5];
     get_arg(args_str, r);
-    args[0] = Num{false, REGISTER[r]};
+    args[0] = Num{false, (unsigned int)REGISTER[r]};
     return;
 }
 
@@ -108,10 +108,10 @@ inline void set_args_rd_imm(const char *args_str, Num *args) {
     // `rs2` could be `imm`, so it has a maximun length of 10 (without '\0')
     int a = get_arg(args_str, rd);  // shift backwards `a` chars
     get_arg(args_str + a, rs);
-    args[0] = Num{false, REGISTER[rd]};
+    args[0] = Num{false, (unsigned int)REGISTER[rd]};
     'a' <= rs[0] && rs[0] <= 'z' 
-        ? args[1] = Num{false, REGISTER[rs]}  // is register name
-        : args[1] = Num{true, strtoi(rs)};  // is immediate number
+        ? args[1] = Num{false, (unsigned int)REGISTER[rs]}  // is register name
+        : args[1] = Num{true, (unsigned int)strtoi(rs)};  // is immediate number
     return;
 }
 
@@ -122,11 +122,11 @@ inline void set_args_rd_rs_imm(const char *args_str, Num *args) {
     int a = get_arg(args_str, rd);
     int b = get_arg(args_str + a, rs);
     get_arg(args_str + a + b, rs2);
-    args[0] = Num{false, REGISTER[rd]};
-    args[1] = Num{false, REGISTER[rs]};
+    args[0] = Num{false, (unsigned int)REGISTER[rd]};
+    args[1] = Num{false, (unsigned int)REGISTER[rs]};
     'a' <= rs2[0] && rs2[0] <= 'z' 
-        ? args[2] = Num{false, REGISTER[rs2]}  // is register name
-        : args[2] = Num{true, strtoi(rs2)};  // is immediate number
+        ? args[2] = Num{false, (unsigned int)REGISTER[rs2]}  // is register name
+        : args[2] = Num{true, (unsigned int)strtoi(rs2)};  // is immediate number
     return;
 }
 
@@ -134,7 +134,7 @@ inline void set_args_rd_rs_imm(const char *args_str, Num *args) {
 inline void set_args_lid(const char *args_str, Num *args) {
     char line_id[101];
     get_arg(args_str, line_id);
-    args[0] = Num{false, JUMP_LINE[line_id]};
+    args[0] = Num{false, (unsigned int)JUMP_LINE[line_id]};
     return;
 }
 
@@ -145,9 +145,9 @@ inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
     int a = get_arg(args_str, rs1);
     int b = get_arg(args_str + a, rs2);
     get_arg(args_str + a + b, line_id);
-    args[0] = Num{false, REGISTER[rs1]};
-    args[1] = Num{false, REGISTER[rs2]};
-    args[2] = Num{false, JUMP_LINE[line_id]};
+    args[0] = Num{false, (unsigned int)REGISTER[rs1]};
+    args[1] = Num{false, (unsigned int)REGISTER[rs2]};
+    args[2] = Num{false, (unsigned int)JUMP_LINE[line_id]};
     return;
 }
 
@@ -167,7 +167,6 @@ Simulator::~Simulator() {}
 void Simulator::parse_file(const char *FILENAME) {
     std::ifstream risc_file(FILENAME, std::ios::in);
     char line_str[Simulator::MAX_LINE_COL];  // instruction line
-
     int current_line = 0;  // current line index (0-index)
 
     while (risc_file.getline(line_str, sizeof(line_str))) {
@@ -194,7 +193,6 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
     // receive instruction name
     for (; i < line_len; ++i) {
         if (script[i] == ' ') {  // instrction name end
-            // while (script[i] == ' ') ++i;  // skip spaces
             break;
         }
         if (script[i] == ':') {  // is line_ID
