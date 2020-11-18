@@ -4,8 +4,13 @@
 #    define __SIMULATOR_H_
 
 struct Num {
-    bool         type;
+    bool         type;  
+    // `true` means immediate number
+    // `false` means register or memory address or line_ID 
+    //   (depend on the instruction)
     unsigned int val;
+    // if `val` means register, we will use 0 to 31 to represent it
+
     Num();
     ~Num();
 };
@@ -13,8 +18,8 @@ struct Num {
 class Line {
   private:
 #    define UNDEFINED   -10
-#    define END         -1
 #    define DRAW        -2
+#    define END         -1
 #    define LINE_SYMBOL 0
 #    define LOAD        1
 #    define STORE       2
@@ -40,7 +45,8 @@ class Line {
     Num   arg[3];
 
   public:
-    Line(/* args */);
+    Line();
+    Line(const short &t, const Num *args, const int &arg_n);
     ~Line();
     short get_type() {
         return type;
@@ -53,6 +59,7 @@ class Line {
 class Simulator {
   private:
     static const int MAX_INSTRUCTION = 10000;
+    static const int MAX_LINE_COL = 100;
     Line             lines[MAX_INSTRUCTION];
     Status           status;
     unsigned int     now_line;
@@ -61,8 +68,8 @@ class Simulator {
   public:
     Simulator(/* args */);
     ~Simulator();
-    // void parse(const char *FILENAME);
-    void parse(const char *script);
+    void parse_file(const char *FILENAME);
+    void parse(const char *script, Line &line, const int &current_line);
     void execute(unsigned int stop_line);
     void do_line(unsigned int &now_line, Line line);
     void jal(unsigned int symbol);
