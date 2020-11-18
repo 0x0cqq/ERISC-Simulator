@@ -14,7 +14,9 @@ struct Num {
 
 class Line {
   private:
-#    define UNDEFINED   -1
+#    define UNDEFINED   -10
+#    define DRAW        -2
+#    define END         -1
 #    define LINE_SYMBOL 0
 #    define LOAD        1
 #    define STORE       2
@@ -35,8 +37,6 @@ class Line {
 #    define BGE         34
 #    define CALL        41
 #    define RET         42
-#    define END         51
-#    define DRAW        52
     short type;
     Num   arg[3];
 

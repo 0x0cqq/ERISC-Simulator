@@ -38,7 +38,10 @@ std::map<std::string, int> REGISTER = {
     {"x31", 31}, {"t6", 31}
 };
 
+// TODO: void line (type； undefine)
 std::map<std::string, short> TYPE = {
+    {"end", -1},
+    {"draw", -2},
     {"load", 1},
     {"store", 2},
     {"push", 3},
@@ -282,10 +285,10 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
     case 42:  // ret
         line = Line(42, args, 0);
         break;
-    case 51:  // end
+    case -1:  // end
         line = Line(51, args, 0);
         break;
-    case 52:  // draw
+    case -2:  // draw
         line = Line(52, args, 0);
         break;
     default:
