@@ -10,6 +10,9 @@ struct Num {
     //   (depend on the instruction)
     unsigned int val;
     // if `val` means register, we will use 0 to 31 to represent it
+
+    Num();
+    ~Num();
 };
 
 class Line {
@@ -37,6 +40,7 @@ class Line {
 #    define BGE         34
 #    define CALL        41
 #    define RET         42
+
     short type;
     Num   arg[3];
 
@@ -44,6 +48,12 @@ class Line {
     Line();
     Line(const short &t, const Num *args, const int &arg_n);
     ~Line();
+    short get_type() {
+        return type;
+    }
+    Num get_arg(unsigned int i) {
+        return arg[i];
+    }
 };
 
 class Simulator {
@@ -53,6 +63,7 @@ class Simulator {
     Line             lines[MAX_INSTRUCTION];
     Status           status;
     unsigned int     now_line;
+    unsigned int     lines_num;
 
   public:
     Simulator(/* args */);
@@ -60,7 +71,8 @@ class Simulator {
     void parse_file(const char *FILENAME);
     void parse(const char *script, Line &line, const int &current_line);
     void execute(unsigned int stop_line);
-    void do_line(Line line);
+    void do_line(unsigned int &now_line, Line line);
+    void jal(unsigned int symbol);
 };
 
 #endif
