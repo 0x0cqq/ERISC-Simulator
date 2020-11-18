@@ -25,12 +25,10 @@ std::map<std::string, short> TYPE = {
 // a hash map from the name of line_id to its line number
 std::map<std::string, int> JUMP_LINE;
 
-Num::Num(){
-    type = 1,val = 0;
+Num::Num() {
+    type = 1, val = 0;
 }
-Num::~Num(){
-
-}
+Num::~Num() {}
 
 Line::Line(/* args */) {}
 
@@ -40,7 +38,8 @@ Simulator::Simulator(/* args */) {}
 
 Simulator::~Simulator() {}
 
-// Execute the program from now_line, and ended to stop_line(not execute) (-1 means to the `end`)
+// Execute the program from now_line, and ended to stop_line(not execute) (-1
+// means to the `end`)
 
 void Simulator::execute(unsigned int stop_line = -1) {
     while(true) {
@@ -54,21 +53,22 @@ void Simulator::execute(unsigned int stop_line = -1) {
 #define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
 
 void Simulator::do_line(unsigned int &now_line, Line line) {
-    Num  _arg[3];
+    Num _arg[3];
     for(int i = 0; i < 3; i++) {
         _arg[i] = line.get_arg(i);
     }
-    #define lt line.get_type
-    short T = lt();
-    T = (T >= 0 ? (T/10) : -((-T)/10) - 1);
+#define lt line.get_type
+    short T        = lt();
+    T              = (T >= 0 ? (T / 10) : -((-T) / 10) - 1);
     char *filename = new char[1024];
     switch(T) {
         case -2:
             break;
         case -1:
-            
-            status.get_print_filename((bool)(lt()+2),filename); // -2 -> 0 , -1 -> 1
-            switch (lt()) {
+
+            status.get_print_filename((bool)(lt() + 2),
+                                      filename);  // -2 -> 0 , -1 -> 1
+            switch(lt()) {
                 case DRAW:
                     status.print_to_bmp(filename);
                 case END:
@@ -76,7 +76,7 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
                 default:
                     break;
             }
-            
+
             break;
         case 0:
             switch(lt()) {
@@ -111,17 +111,16 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             status.op(_ref(0), _val(1), _val(2), lt() - 20);
             break;
         case 3:
-            if(lt() == JAL || 
-            (lt() == BEQ && _val(0) == _val(1))|| \
-            (lt() == BNE && _val(0) != _val(1))|| \
-            (lt() == BLT && _val(0) < _val(1)) || \
-            (lt() == BGE && _val(0) > _val(1)) )
-                now_line = _val(2); // dst_line
+            if(lt() == JAL || (lt() == BEQ && _val(0) == _val(1)) ||
+               (lt() == BNE && _val(0) != _val(1)) ||
+               (lt() == BLT && _val(0) < _val(1)) ||
+               (lt() == BGE && _val(0) > _val(1)))
+                now_line = _val(2);  // dst_line
             break;
         case 4:
             switch(lt()) {
                 case CALL:
-                    status.push(now_line);// not according with document
+                    status.push(now_line);  // not according with document
                     now_line = _val(0);
                     break;
                 case RET:
@@ -134,6 +133,6 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     }
     delete[] filename;
     now_line++;
-    if(lt() == END) 
+    if(lt() == END)
         now_line = -1;
 }
