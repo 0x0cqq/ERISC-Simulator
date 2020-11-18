@@ -73,6 +73,7 @@ inline int get_arg(const char *args_str, char *arg) {
     while (i < len && args_str[i] == ' ') ++i;
     while (i < len && args_str[i] != ' ' && args_str[i] != ',') 
         arg[index++] = args_str[i++];
+    arg[index] = '\0';
     return i + 1;
 }
 
