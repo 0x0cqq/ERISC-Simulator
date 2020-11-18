@@ -151,6 +151,8 @@ inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
     return;
 }
 
+Line::Line() {}
+
 Line::Line(const short &t, const Num *args, const int &arg_n) {
     type = t;
     for (int i = 0; i < arg_n; ++i) arg[i] = args[i];
