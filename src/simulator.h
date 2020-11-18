@@ -11,7 +11,7 @@ struct Num {
     unsigned int val;
     // if `val` means register, we will use 0 to 31 to represent it
 
-    Num();
+    Num(bool _type,unsigned int _val);
     ~Num();
 };
 
