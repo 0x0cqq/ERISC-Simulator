@@ -296,7 +296,7 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
     case -2:  // draw
         line = Line(-2, args, 0);
         break;
-    case -10:
+    case -10:  // undefined
         line = Line(-10, args, 0);
         break;
     }
