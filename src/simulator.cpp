@@ -38,8 +38,8 @@ std::map<std::string, int> REGISTER = {
     {"x31", 31}, {"t6", 31}
 };
 
-// TODO: void line (type； undefine)
 std::map<std::string, short> TYPE = {
+    {"undefined", -10},
     {"end", -1},
     {"draw", -2},
     {"load", 1},
@@ -191,23 +191,27 @@ void Simulator::parse_file(const char *FILENAME) {
 
 // parse a single line `script` (the `current_line`th) and store it in `line`
 void Simulator::parse(const char *script, Line &line, const int &current_line) {
-    char name[Simulator::MAX_LINE_COL];  // instruction name
+    char name[Simulator::MAX_LINE_COL] = "undefined";  // instruction name
     Num args[3];  // arguments
     int i = 0;  // index of `line`
     int line_len = strlen(script);  // length of `line`
 
     // receive instruction name
-    for (; i < line_len; ++i) {
-        if (script[i] == ' ') {  // instrction name end
-            break;
+    if (line_len) {  // not blank line
+        for (; i < line_len; ++i) {
+            if (script[i] == ' ') {  // instrction name end
+                break;
+            }
+            if (script[i] == ':') {  // is line_ID
+                JUMP_LINE[name] = current_line;
+                break;
+            }
+            name[i] = script[i];  // add a character to `name`
         }
-        if (script[i] == ':') {  // is line_ID
-            JUMP_LINE[name] = current_line;
-            break;
-        }
-        name[i] = script[i];  // add a character to `name`
+        name[i] = '\0';
     }
-    name[i] = '\0';
+    // if `line_len` == 0, which means `script` is a blank line,
+    // `name` would stay as its default value "undefined"
 
     // receive arguments and setup a new `Line`
     switch(TYPE[name]) {
@@ -292,7 +296,8 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
     case -2:  // draw
         line = Line(-2, args, 0);
         break;
-    default:
+    case -10:  // undefined
+        line = Line(-10, args, 0);
         break;
     }
     return;
