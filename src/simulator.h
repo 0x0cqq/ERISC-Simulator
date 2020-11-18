@@ -6,11 +6,15 @@
 struct Num {
     bool         type;
     unsigned int val;
+    Num();
+    ~Num();
 };
 
 class Line {
   private:
-#    define UNDEFINED   -1
+#    define UNDEFINED   -10
+#    define END         -1
+#    define DRAW        -2
 #    define LINE_SYMBOL 0
 #    define LOAD        1
 #    define STORE       2
@@ -31,12 +35,19 @@ class Line {
 #    define BGE         34
 #    define CALL        41
 #    define RET         42
+
     short type;
     Num   arg[3];
 
   public:
     Line(/* args */);
     ~Line();
+    short get_type() {
+        return type;
+    }
+    Num get_arg(unsigned int i) {
+        return arg[i];
+    }
 };
 
 class Simulator {
@@ -45,6 +56,7 @@ class Simulator {
     Line             lines[MAX_INSTRUCTION];
     Status           status;
     unsigned int     now_line;
+    unsigned int     lines_num;
 
   public:
     Simulator(/* args */);
@@ -52,7 +64,8 @@ class Simulator {
     // void parse(const char *FILENAME);
     void parse(const char *script);
     void execute(unsigned int stop_line);
-    void do_line(Line line);
+    void do_line(unsigned int &now_line, Line line);
+    void jal(unsigned int symbol);
 };
 
 #endif
