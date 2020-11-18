@@ -207,6 +207,7 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
         }
         name[i] = script[i];  // add a character to `name`
     }
+    name[i] = '\0';
 
     // receive arguments and setup a new `Line`
     switch(TYPE[name]) {
