@@ -8,6 +8,24 @@ Num::Num(bool _type = 1, unsigned int _val = 0) {
 }
 Num::~Num() {}
 
+Line::Line() {
+    type = UNDEF;
+}
+
+Line::Line(const short &t, const Num *args, const int &arg_n) {
+    type = t;
+    for(int i = 0; i < arg_n; ++i)
+        arg[i] = args[i];
+}
+
+Line::~Line() {}
+
+Simulator::Simulator(/* args */) {
+    now_line = 0;
+}
+
+Simulator::~Simulator() {}
+
 std::map<std::string, int> REGISTER = {
     {"x0", 0},   {"zero", 0}, {"x1", 1},   {"ra", 1},  {"x2", 2},   {"sp", 2},
     {"x3", 3},   {"gp", 3},   {"x4", 4},   {"tp", 4},  {"x5", 5},   {"t0", 5},
@@ -22,11 +40,12 @@ std::map<std::string, int> REGISTER = {
     {"x30", 30}, {"t5", 30},  {"x31", 31}, {"t6", 31}};
 
 std::map<std::string, short> TYPE = {
-    {"undefined", -10}, {"end", -1}, {"draw", -2}, {"load", 1}, {"store", 2},
-    {"push", 3},        {"pop", 4},  {"mov", 10},  {"add", 20}, {"sub", 21},
-    {"mul", 22},        {"div", 23}, {"rem", 24},  {"and", 25}, {"or", 26},
-    {"jal", 30},        {"beq", 31}, {"bne", 32},  {"blt", 33}, {"bge", 34},
-    {"call", 41},       {"ret", 42}};
+    {"UNDEFINED", UNDEF}, {"end", END},   {"draw", DRAW}, {"load", LOAD},
+    {"store", STORE},     {"push", PUSH}, {"pop", POP},   {"mov", MOV},
+    {"add", ADD},         {"sub", SUB},   {"mul", MUL},   {"div", DIV},
+    {"rem", REM},         {"and", AND},   {"or", OR},     {"jal", JAL},
+    {"beq", BEQ},         {"bne", BNE},   {"blt", BLT},   {"bge", BGE},
+    {"call", CALL},       {"ret", RET}};
 
 // a hash map from the name of line_id to its line number
 std::map<std::string, int> JUMP_LINE;
@@ -49,9 +68,8 @@ inline int get_arg(const char *args_str, char *arg) {
 // convert a string into a number (hex or dec)
 inline int strtoi(const char *s) {
     int num;
-    s[1] == 'x' ? sscanf(s, "%x", &num)  // hex
-                  :
-                  sscanf(s, "%d", &num);  // dec
+    // judge by '0x' ? hex : dec
+    s[1] == 'x' ? sscanf(s, "%x", &num) : sscanf(s, "%d", &num);
     return num;
 }
 
@@ -60,7 +78,7 @@ inline void set_args_rd_rs(const char *args_str, Num *args) {
     char rd[5], rs[5];
     int  a = get_arg(args_str, rd);  // shift backwards `a` chars
     get_arg(args_str + a, rs);
-    args[0] = (Num){false, (unsigned int)REGISTER[rd]};
+    args[0] = Num{false, (unsigned int)REGISTER[rd]};
     args[1] = Num{false, (unsigned int)REGISTER[rs]};
     return;
 }
@@ -124,24 +142,9 @@ inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
     return;
 }
 
-Line::Line() {}
-
-Line::Line(const short &t, const Num *args, const int &arg_n) {
-    type = t;
-    for(int i = 0; i < arg_n; ++i)
-        arg[i] = args[i];
-}
-
-Line::~Line() {}
-
-Simulator::Simulator(/* args */) {}
-
-Simulator::~Simulator() {}
-
-// Execute the program from now_line, and ended to stop_line(not execute) (-1
-// means to the `end`)
-
-void Simulator::execute(unsigned int stop_line = -1) {
+// Execute the program from now_line, and ended to stop_line(not execute)
+// (-1 means to the `end` symbol)
+void Simulator::execute(unsigned int stop_line) {
     while(true) {
         if(now_line == stop_line || now_line == lines_num)
             break;
@@ -149,23 +152,39 @@ void Simulator::execute(unsigned int stop_line = -1) {
     }
 }
 
+// some define to make get register's val and reference more easy
+// get reference of register from argument
 #define _ref(i) (status.get_reg_ref(_arg[i].val))
+// get value of arg[i] (immediate number or register)
 #define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
+// the type of the line
+#define lt line.get_type
 
+// Do a line, in "now_line", with Line Struction "line"
 void Simulator::do_line(unsigned int &now_line, Line line) {
     Num _arg[3];
+    // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
         _arg[i] = line.get_arg(i);
     }
-#define lt line.get_type
+    // test part
+    std::printf("now_line:%d\n",now_line);
+    std::printf("  type:%d arg:",line.get_type());
+    for(int i = 0;i < 3;i++){
+        printf("(%d,%d)",int(_arg[i].type),_arg[i].val);
+        if(i < 2) printf(",");
+    }
+    printf("\n");
+    // sort the lines to different types
     short T        = lt();
     T              = (T >= 0 ? (T / 10) : -((-T) / 10) - 1);
     char *filename = new char[1024];
-    switch(T) {
-        case -2:
-            break;
-        case -1:
 
+    switch(T) {
+        case -2:  // UNDEFINED
+            break;
+        case -1:  // DRAW, END
+            // get_print_name from status
             status.get_print_filename((bool)(lt() + 2),
                                       filename);  // -2 -> 0 , -1 -> 1
             switch(lt()) {
@@ -178,7 +197,7 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             }
 
             break;
-        case 0:
+        case 0:  // LINE_SYMBOL, LOAD, STORE, PUSH, POP
             switch(lt()) {
                 case LINE_SYMBOL:
                     break;
@@ -198,7 +217,7 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
                     break;
             }
             break;
-        case 1:
+        case 1:  // MOV
             switch(lt()) {
                 case MOV:
                     status.mov(_ref(0), _val(1));
@@ -210,14 +229,14 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
         case 2:  // ADD, SUB, MUL, DIV, REM, AND, OR
             status.op(_ref(0), _val(1), _val(2), lt() - 20);
             break;
-        case 3:
+        case 3:  // JAL, BEQ, BNE, BLT, BGE
             if(lt() == JAL || (lt() == BEQ && _val(0) == _val(1)) ||
                (lt() == BNE && _val(0) != _val(1)) ||
                (lt() == BLT && _val(0) < _val(1)) ||
                (lt() == BGE && _val(0) > _val(1)))
                 now_line = _val(2);  // dst_line
             break;
-        case 4:
+        case 4:  // CALL, RET
             switch(lt()) {
                 case CALL:
                     status.push(now_line);  // not according with document
@@ -232,9 +251,17 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             break;
     }
     delete[] filename;
-    now_line++;
+    // test part2
+    static int cnt = 0;
+    char *tmpfilename = new char[1024];
+    std::sprintf(tmpfilename,"%d.txt",cnt);
+    status.print_raw(tmpfilename);
+    cnt++;
+    delete[] tmpfilename;
+    // end test part 2
+    now_line++;  // jump to the next line
     if(lt() == END)
-        now_line = -1;
+        now_line = -1;  // set an end signal
 }
 
 // parse input file `FILENAME`(.risc)
@@ -246,25 +273,28 @@ void Simulator::parse_file(const char *FILENAME) {
 
     while(risc_file.getline(line_str, sizeof(line_str))) {
         // setup an instruction line
-        parse(line_str, lines[current_line++], current_line);
+        parse(line_str, lines[current_line], current_line);
+        current_line++;
         if(current_line == MAX_INSTRUCTION) {
-            printf("Maxinum instructions limit reached.\n"
+            printf("Maximum instructions limit reached.\n"
                    "Instructions after line %d will be ignored.\n",
                    MAX_INSTRUCTION);
             // TODO: raise exception?
             break;
         }
     }
+    // record line_num into the simulator, to end the execute
+    lines_num = current_line;
     risc_file.close();
     return;
 }
 
 // parse a single line `script` (the `current_line`th) and store it in `line`
-void Simulator::parse(const char *script, Line &line, const int &current_line) {
-    char name[Simulator::MAX_LINE_COL] = "undefined";  // instruction name
-    Num  args[3];                                      // arguments
-    int  i        = 0;                                 // index of `line`
-    int  line_len = strlen(script);                    // length of `line`
+void Simulator::parse(const char *script, Line &line, int current_line) {
+    char name[Simulator::MAX_LINE_COL] = "UNDEF";  // instruction name
+    Num  args[3];                                  // arguments
+    int  i        = 0;                             // index of `line`
+    int  line_len = strlen(script);                // length of `line`
 
     // receive instruction name
     if(line_len) {  // not blank line
@@ -273,6 +303,7 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
                 break;
             }
             if(script[i] == ':') {  // is line_ID
+                name[i]         = '\0';
                 JUMP_LINE[name] = current_line;
                 break;
             }
@@ -281,94 +312,98 @@ void Simulator::parse(const char *script, Line &line, const int &current_line) {
         name[i] = '\0';
     }
     // if `line_len` == 0, which means `script` is a blank line,
-    // `name` would stay as its default value "undefined"
+    // `name` would stay as its default value "UNDEF"
 
     // receive arguments and setup a new `Line`
     switch(TYPE[name]) {
         case 1:  // load [rd],[rs]
             set_args_rd_rs(script + i, args);
-            line = Line(1, args, 2);
+            line = Line(LOAD, args, 2);
             break;
         case 2:  // store [rd],[rs]
             set_args_rd_rs(script + i, args);
-            line = Line(2, args, 2);
+            line = Line(STORE, args, 2);
             break;
         case 3:  // push [rs]
             set_args_r(script + i, args);
-            line = Line(3, args, 1);
+            line = Line(PUSH, args, 1);
             break;
         case 4:  // pop [rd]
             set_args_r(script + i, args);
-            line = Line(4, args, 1);
+            line = Line(POP, args, 1);
             break;
         case 10:  // mov [rd],[rs/imm]
             set_args_rd_imm(script + i, args);
-            line = Line(10, args, 2);
+            line = Line(MOV, args, 2);
             break;
         case 20:  // add [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(20, args, 3);
+            line = Line(ADD, args, 3);
             break;
         case 21:  // sub [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(21, args, 3);
+            line = Line(SUB, args, 3);
             break;
         case 22:  // mul [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(22, args, 3);
+            line = Line(MUL, args, 3);
             break;
         case 23:  // div [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(23, args, 3);
+            line = Line(DIV, args, 3);
             break;
         case 24:  // rem [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(24, args, 3);
+            line = Line(REM, args, 3);
             break;
         case 25:  // and [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(25, args, 3);
+            line = Line(AND, args, 3);
             break;
         case 26:  // or [rd],[rs1],[rs2/imm]
             set_args_rd_rs_imm(script + i, args);
-            line = Line(26, args, 3);
+            line = Line(OR, args, 3);
             break;
         case 30:  // jal [line_id]
             set_args_lid(script + i, args);
-            line = Line(30, args, 1);
+            line = Line(JAL, args, 1);
             break;
         case 31:  // beq [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            line = Line(31, args, 3);
+            line = Line(BEQ, args, 3);
             break;
         case 32:  // bne [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            line = Line(32, args, 3);
+            line = Line(BNE, args, 3);
             break;
         case 33:  // blt [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            line = Line(33, args, 3);
+            line = Line(BLT, args, 3);
             break;
         case 34:  // bge [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            line = Line(34, args, 3);
+            line = Line(BGE, args, 3);
             break;
         case 41:  // call [line_id]
             set_args_lid(script + i, args);
-            line = Line(41, args, 1);
+            line = Line(CALL, args, 1);
             break;
         case 42:  // ret
-            line = Line(42, args, 0);
+            line = Line(RET, args, 0);
             break;
         case -1:  // end
-            line = Line(-1, args, 0);
+            line = Line(END, args, 0);
             break;
         case -2:  // draw
-            line = Line(-2, args, 0);
+            line = Line(DRAW, args, 0);
             break;
-        case -10:  // undefined
-            line = Line(-10, args, 0);
+        case 0:  // line symbol
+            line = Line(LINE_SYMBOL, args, 0);
+            break;
+        case -10:  // UNDEF
+            line = Line(UNDEF, args, 0);
             break;
     }
     return;
 }
+

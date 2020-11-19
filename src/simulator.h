@@ -4,20 +4,19 @@
 #    define __SIMULATOR_H_
 
 struct Num {
-    bool         type;  
+    bool type;
     // `true` means immediate number
-    // `false` means register or memory address or line_ID 
+    // `false` means register or memory address or line_ID
     //   (depend on the instruction)
     unsigned int val;
     // if `val` means register, we will use 0 to 31 to represent it
-
-    Num(bool _type,unsigned int _val);
+    Num(bool _type, unsigned int _val);
     ~Num();
 };
 
 class Line {
   private:
-#    define UNDEFINED   -10
+#    define UNDEF       -10
 #    define DRAW        -2
 #    define END         -1
 #    define LINE_SYMBOL 0
@@ -59,20 +58,18 @@ class Line {
 class Simulator {
   private:
     static const int MAX_INSTRUCTION = 10000;
-    static const int MAX_LINE_COL = 100;
+    static const int MAX_LINE_COL    = 100;
     Line             lines[MAX_INSTRUCTION];
     Status           status;
     unsigned int     now_line;
     unsigned int     lines_num;
-
+    void parse(const char *script, Line &line, const int current_line);
+    void do_line(unsigned int &now_line, Line line);
   public:
     Simulator(/* args */);
     ~Simulator();
     void parse_file(const char *FILENAME);
-    void parse(const char *script, Line &line, const int &current_line);
-    void execute(unsigned int stop_line);
-    void do_line(unsigned int &now_line, Line line);
-    void jal(unsigned int symbol);
+    void execute(unsigned int stop_line = -1);
 };
 
 #endif
