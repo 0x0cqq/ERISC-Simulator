@@ -162,7 +162,6 @@ void Simulator::execute(unsigned int stop_line) {
 
 // Do a line, in "now_line", with Line Struction "line"
 void Simulator::do_line(unsigned int &now_line, Line line) {
-
     Num _arg[3];
     // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
@@ -180,6 +179,7 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     short T        = lt();
     T              = (T >= 0 ? (T / 10) : -((-T) / 10) - 1);
     char *filename = new char[1024];
+
     switch(T) {
         case -2:  // UNDEFINED
             break;
@@ -251,6 +251,14 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             break;
     }
     delete[] filename;
+    // test part2
+    static int cnt = 0;
+    char *tmpfilename = new char[1024];
+    std::sprintf(tmpfilename,"%d.txt",cnt);
+    status.print_raw(tmpfilename);
+    cnt++;
+    delete[] tmpfilename;
+    // end test part 2
     now_line++;  // jump to the next line
     if(lt() == END)
         now_line = -1;  // set an end signal

@@ -25,6 +25,7 @@ class Status {
     void get_print_filename(bool op, char *FILENAME);
     void print_to_bmp(const char *FILENAME);  // op = 0
     void print_to_txt(const char *FILENAME);  // op = 1
+    void print_raw(const char *FILENAME);
     unsigned int  get_reg_val(unsigned short pos);
     unsigned int &get_reg_ref(unsigned short pos);
 };

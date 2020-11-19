@@ -1,5 +1,7 @@
 #include "status.h"
 #include <cstdio>
+#include <fstream>
+#include <iomanip>
 
 Status::Status(/* args */) {
     stack_ptr = stack + STACK_SIZE;
@@ -11,7 +13,8 @@ Status::~Status() {}
 unsigned int Status::read_4_byte(unsigned char *ptr) {
     unsigned int ans = 0;
     for(int i = 0; i < 4; i++) {
-        ans = (ans << 8) | (unsigned int)(ptr[i]);
+        ans = (ans << 8) | (unsigned int)(ptr[4-i-1]);
+        printf("ptr[%d]:%d\n",i,(int)(ptr[4-i-1]));
     }
     return ans;
 }
@@ -84,7 +87,7 @@ void Status::get_print_filename(bool op, char *FILENAME) {
     if(op == 0) {
         std::sprintf(FILENAME, "%d.bmp", ++draw_time);
     }
-    else {
+    else if(op == 1){
         std::sprintf(FILENAME, "result.txt");
     }
 }
@@ -93,6 +96,14 @@ void Status::print_to_bmp(const char *FILENAME) {
 }
 void Status::print_to_txt(const char *FILENAME) {
     return;
+}
+void Status::print_raw(const char *FILENAME){
+    std::ofstream f_out(FILENAME, std::ios::binary);
+    f_out.write((char*)(x),sizeof(x));
+    // f_out.write((char*)(memory),sizeof(memory));
+    // f_out.write((char*)(stack),sizeof(stack));
+    printf("stack_ptr:%d\n",int(stack_ptr - stack)); 
+    f_out.close();
 }
 unsigned int Status::get_reg_val(unsigned short pos) {
     return x[pos];
