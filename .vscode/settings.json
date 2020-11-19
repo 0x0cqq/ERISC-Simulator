@@ -3,6 +3,7 @@
     "files.associations": {
         "cstdarg": "cpp",
         "cstdio": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "istream": "cpp"
     }
 }
