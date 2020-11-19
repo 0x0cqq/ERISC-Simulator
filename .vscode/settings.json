@@ -2,6 +2,7 @@
     "C_Cpp.clang_format_fallbackStyle": "none",
     "files.associations": {
         "cstdarg": "cpp",
-        "cstdio": "cpp"
+        "cstdio": "cpp",
+        "cmath": "cpp"
     }
 }

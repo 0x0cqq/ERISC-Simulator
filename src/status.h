@@ -10,6 +10,7 @@ class Status {
     unsigned char    memory[MEMORY_SIZE];
     unsigned char    stack[STACK_SIZE];
     unsigned int     stack_ptr;
+    unsigned int     draw_time;
 
   public:
     Status(/* args */);
@@ -20,12 +21,11 @@ class Status {
     void pop(unsigned int &rd);
     void mov(unsigned int &rd, unsigned int rs);
     void op(unsigned int &rd, unsigned int rs1, unsigned int rs2, short type);
-    void print_to_bmp(const char *FILENAME);
-    void print_to_txt(const char *FILENAME);
-    int  get_reg_val(unsigned int pos);
-    int &get_reg_ref(unsigned int pos);
+    void get_print_filename(bool op,char *FILENAME); 
+    void print_to_bmp(const char *FILENAME); // op = 0
+    void print_to_txt(const char *FILENAME); // op = 1
+    unsigned int  get_reg_val(unsigned int pos);
+    unsigned int &get_reg_ref(unsigned int pos);
 };
 
-#endif // __STATUS_H_
-
-
+#endif  // __STATUS_H_
