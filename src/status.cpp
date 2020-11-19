@@ -14,7 +14,7 @@ unsigned int Status::read_4_byte(unsigned char *ptr) {
     unsigned int ans = 0;
     for(int i = 0; i < 4; i++) {
         ans = (ans << 8) | (unsigned int)(ptr[4-i-1]);
-        printf("ptr[%d]:%d\n",i,(int)(ptr[4-i-1]));
+        // printf("ptr[%d]:%d\n",i,(int)(ptr[4-i-1]));
     }
     return ans;
 }
@@ -102,7 +102,7 @@ void Status::print_raw(const char *FILENAME){
     f_out.write((char*)(x),sizeof(x));
     // f_out.write((char*)(memory),sizeof(memory));
     // f_out.write((char*)(stack),sizeof(stack));
-    printf("stack_ptr:%d\n",int(stack_ptr - stack)); 
+    // printf("stack_ptr:%d\n",int(stack_ptr - stack)); 
     f_out.close();
 }
 unsigned int Status::get_reg_val(unsigned short pos) {
