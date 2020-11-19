@@ -382,7 +382,12 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 30:  // jal [line_id]
             set_args_lid(script + i, args);
-            line = Line(JAL, args, 1);
+            if (args[0].val) line = Line(JAL, args, 1);
+            else {
+                unfound_line[unfound_index] = current_line;
+                strcpy(unfound_scpt[unfound_index], script);
+                ++unfound_index;
+            }
             break;
         case 31:  // beq [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
@@ -395,7 +400,7 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 32:  // bne [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (args[2].val) line = Line(BEQ, args, 3);
+            if (args[2].val) line = Line(BNE, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -404,7 +409,7 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 33:  // blt [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (args[2].val) line = Line(BEQ, args, 3);
+            if (args[2].val) line = Line(BLT, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -413,7 +418,7 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 34:  // bge [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (args[2].val) line = Line(BEQ, args, 3);
+            if (args[2].val) line = Line(BGE, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -422,7 +427,7 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 41:  // call [line_id]
             set_args_lid(script + i, args);
-            if (args[1].val) line = Line(BEQ, args, 3);
+            if (args[1].val) line = Line(CALL, args, 1);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
