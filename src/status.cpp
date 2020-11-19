@@ -4,7 +4,9 @@ Status::Status(/* args */) {}
 
 Status::~Status() {}
 
-void Status::load(unsigned int &rd, unsigned int ptr) {}
+void Status::load(unsigned int &rd, unsigned int ptr) {
+    
+}
 void Status::store(unsigned int rs, unsigned int ptr) {}
 void Status::push(unsigned int rs) {}
 void Status::pop(unsigned int &rd) {}
