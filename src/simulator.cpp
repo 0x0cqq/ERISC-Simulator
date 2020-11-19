@@ -144,7 +144,7 @@ inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
 
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
-void Simulator::execute(unsigned int stop_line = -1) {
+void Simulator::execute(unsigned int stop_line) {
     while(true) {
         if(now_line == stop_line || now_line == lines_num)
             break;
@@ -162,11 +162,20 @@ void Simulator::execute(unsigned int stop_line = -1) {
 
 // Do a line, in "now_line", with Line Struction "line"
 void Simulator::do_line(unsigned int &now_line, Line line) {
+
     Num _arg[3];
     // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
         _arg[i] = line.get_arg(i);
     }
+    // test part
+    std::printf("now_line:%d\n",now_line);
+    std::printf("  type:%d arg:",line.get_type());
+    for(int i = 0;i < 3;i++){
+        printf("(%d,%d)",int(_arg[i].type),_arg[i].val);
+        if(i < 2) printf(",");
+    }
+    printf("\n");
     // sort the lines to different types
     short T        = lt();
     T              = (T >= 0 ? (T / 10) : -((-T) / 10) - 1);
@@ -389,3 +398,4 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
     }
     return;
 }
+
