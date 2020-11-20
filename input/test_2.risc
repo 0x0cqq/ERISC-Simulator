@@ -10,8 +10,8 @@ bne t2,x0,loop
 draw
 end
 calnext:
-add t1,1
-sub t2,1
-add t0,0x10000
+add t1,t1,1
+sub t2,t2,1
+add t0,t0,0x10000
 draw
 ret
