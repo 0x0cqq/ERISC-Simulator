@@ -6,11 +6,10 @@
 struct Num {
     bool type;
     // `true` means immediate number
-    // `false` means register or memory address or line_ID
+    // `false` means register or memory address or line_to_jump (line to exec)
     //   (depend on the instruction)
     unsigned int val;
     // if `val` means register, we will use 0 to 31 to represent it
-
     Num(bool _type, unsigned int _val);
     ~Num();
 };
@@ -64,14 +63,13 @@ class Simulator {
     Status           status;
     unsigned int     now_line;
     unsigned int     lines_num;
-
+    void parse(const char *script, Line &line, const int current_line);
+    void do_line(unsigned int &now_line, Line line);
   public:
     Simulator(/* args */);
     ~Simulator();
     void parse_file(const char *FILENAME);
-    void parse(const char *script, Line &line, const int current_line);
-    void execute(unsigned int stop_line);
-    void do_line(unsigned int &now_line, Line line);
+    void execute(unsigned int stop_line = -1);
 };
 
 #endif
