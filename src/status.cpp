@@ -1,4 +1,5 @@
 #include "status.h"
+#include "output_bmp.h"
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
@@ -26,21 +27,27 @@ void Status::write_4_byte(unsigned char *ptr, unsigned int x) {
 }
 // load data from memory[ptr] to register rd
 void Status::load(unsigned int &rd, unsigned int ptr) {
+    if(ptr + 4 > MEMORY_SIZE)
+        throw std::runtime_error("memory overread");
     rd = read_4_byte(memory + ptr);
 }
 // store data from register rs to memory[ptr]
 void Status::store(unsigned int rs, unsigned int ptr) {
+    if(ptr + 4 > MEMORY_SIZE)
+        throw std::runtime_error("memory overstore");
     write_4_byte(memory + ptr, rs);
 }
 // push register rs into stack
 void Status::push(unsigned int rs) {
+    if(stack_ptr  == stack)
+        throw std::runtime_error("stack overpush");
     stack_ptr -= 4;
     write_4_byte(stack_ptr, rs);
 }
 // pop stack and store it into register
 void Status::pop(unsigned int &rd) {
     if(stack_ptr == stack + STACK_SIZE) {
-        // a exception
+        throw std::runtime_error("stack overpop");
     }
     else {
         rd = read_4_byte(stack_ptr);
@@ -105,9 +112,26 @@ void Status::print_raw(const char *FILENAME){
     // printf("stack_ptr:%d\n",int(stack_ptr - stack)); 
     f_out.close();
 }
+
+void Status::set_reg_status(unsigned short pos,bool op){
+    if(pos == -1) return;
+    output_status.reg_rw[pos] |= (1<<op);
+}
+// op == 0 read, op == 1 write
+void Status::set_memory_status(unsigned int ptr){
+    if(ptr == -1) return;
+    output_status.mem_rw[ptr/output_status.MEMORY_BLOCK_SIZE] = true;
+} 
+void Status::set_stack_status(){
+    output_status.stack_rw = true;
+}
 unsigned int Status::get_reg_val(unsigned short pos) {
+    if(pos > REGISTER_NUM)
+        throw std::runtime_error("register_val out of range");
     return x[pos];
 }
 unsigned int &Status::get_reg_ref(unsigned short pos) {
+    if(pos > REGISTER_NUM)
+        throw std::runtime_error("register_val out of range");
     return x[pos];
 }

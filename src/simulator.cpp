@@ -1,7 +1,7 @@
 #include "simulator.h"
 #include <cstring>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <map>
 // #include <unistd.h>
 
@@ -135,7 +135,8 @@ inline void set_args_lid(const char *args_str, Num *args) {
     char line_id[101];
     get_arg(args_str, line_id);
     args[0] = Num{true, jump_line.count(line_id) ? jump_line[line_id] : -1};
-    // std::cout << line_id << " " << (jump_line.count(line_id) ? jump_line[line_id] : -1) <<  std::endl;
+    // std::cout << line_id << " " << (jump_line.count(line_id) ?
+    // jump_line[line_id] : -1) <<  std::endl;
     return;
 }
 
@@ -149,7 +150,8 @@ inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
     args[0] = Num{false, (unsigned int)REGISTER[rs1]};
     args[1] = Num{false, (unsigned int)REGISTER[rs2]};
     args[2] = Num{true, jump_line.count(line_id) ? jump_line[line_id] : -1};
-    // std::cout << line_id << " " << (jump_line.count(line_id) ? jump_line[line_id] : -1) <<  std::endl;
+    // std::cout << line_id << " " << (jump_line.count(line_id) ?
+    // jump_line[line_id] : -1) <<  std::endl;
     return;
 }
 
@@ -168,6 +170,7 @@ void Simulator::execute(unsigned int stop_line) {
 #define _ref(i) (status.get_reg_ref(_arg[i].val))
 // get value of arg[i] (immediate number or register)
 #define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
+#define _raw(i) (_arg[i].type ? -1 :_arg[i].val)
 // the type of the line
 #define lt line.get_type
 
@@ -216,15 +219,23 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
                     break;
                 case LOAD:
                     status.load(_ref(0), _val(1));
+                    status.set_reg_status(_raw(0),1);
+                    status.set_memory_status(_raw(1));
                     break;
                 case STORE:
-                    status.store(_ref(0), _val(1));
+                    status.store(_val(0), _val(1));
+                    status.set_reg_status(_raw(0),0);
+                    status.set_memory_status(_raw(1));
                     break;
                 case PUSH:
                     status.push(_val(0));
+                    status.set_reg_status(_raw(0),0);
+                    status.set_stack_status();
                     break;
                 case POP:
                     status.pop(_ref(0));
+                    status.set_reg_status(_raw(0),1);
+                    status.set_stack_status();
                     break;
                 default:
                     break;
@@ -234,6 +245,8 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             switch(lt()) {
                 case MOV:
                     status.mov(_ref(0), _val(1));
+                    status.set_reg_status(_raw(0),1);
+                    status.set_reg_status(_raw(1),0);
                     break;
                 default:
                     break;
@@ -248,8 +261,11 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             if((lt() == BEQ && _val(0) == _val(1)) ||
                (lt() == BNE && _val(0) != _val(1)) ||
                (lt() == BLT && _val(0) < _val(1)) ||
-               (lt() == BGE && _val(0) > _val(1)))
+               (lt() == BGE && _val(0) > _val(1))){
                 now_line = _val(2);  // dst_line
+                status.set_reg_status(_raw(0),0);
+                status.set_reg_status(_raw(1),0);
+            }
             break;
         case 4:  // CALL, RET
             switch(lt()) {
@@ -303,7 +319,7 @@ void Simulator::parse_file(const char *FILENAME) {
 
     // deal with the instuctions whose argument [line_id]
     // appeared before its declaration
-    while(unfound_index--){
+    while(unfound_index--) {
         // std::cout << "Unfound" << unfound_index << std::endl;
         parse(unfound_scpt[unfound_index], lines[unfound_line[unfound_index]],
               unfound_line[unfound_index]);  // re-parse the scripts
@@ -332,7 +348,7 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             if(script[i] == ':') {  // is line_ID
                 // std::cout << "Line Symbol:" << current_line << std::endl;
                 name[i]         = '\0';
-                jump_line[name] = current_line;  // the next line index // no! 
+                jump_line[name] = current_line;  // the next line index // no!
                 // std::cout << "Line Symbol:" << jump_line[name] << std::endl;
                 break;
             }
@@ -395,7 +411,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 30:  // jal [line_id]
             set_args_lid(script + i, args);
-            if (~args[0].val) line = Line(JAL, args, 1);
+            if(~args[0].val)
+                line = Line(JAL, args, 1);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -404,7 +421,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 31:  // beq [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (~args[2].val) line = Line(BEQ, args, 3);
+            if(~args[2].val)
+                line = Line(BEQ, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -413,7 +431,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 32:  // bne [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (~args[2].val) line = Line(BNE, args, 3);
+            if(~args[2].val)
+                line = Line(BNE, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -422,7 +441,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 33:  // blt [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (~args[2].val) line = Line(BLT, args, 3);
+            if(~args[2].val)
+                line = Line(BLT, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -431,7 +451,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 34:  // bge [rs1],[rs2],[line_id]
             set_args_rs_rs_lid(script + i, args);
-            if (~args[2].val) line = Line(BGE, args, 3);
+            if(~args[2].val)
+                line = Line(BGE, args, 3);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -440,7 +461,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case 41:  // call [line_id]
             set_args_lid(script + i, args);
-            if (~args[0].val) line = Line(CALL, args, 1);
+            if(~args[0].val)
+                line = Line(CALL, args, 1);
             else {
                 unfound_line[unfound_index] = current_line;
                 strcpy(unfound_scpt[unfound_index], script);
@@ -461,6 +483,8 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             break;
         case -10:  // UNDEF
             line = Line(UNDEF, args, 0);
+            break;
+        default:
             break;
     }
     return;

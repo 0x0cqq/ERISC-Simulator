@@ -65,6 +65,7 @@ class Simulator {
     unsigned int     lines_num;
     void parse(const char *script, Line &line, const int current_line);
     void do_line(unsigned int &now_line, Line line);
+
   public:
     Simulator(/* args */);
     ~Simulator();
