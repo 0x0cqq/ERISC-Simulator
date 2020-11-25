@@ -5,6 +5,20 @@
 #include <map>
 // #include <unistd.h>
 
+// some define to make code more elegant
+#define add_unfound                                                            \
+    unfound_line[unfound_index] = current_line;                                \
+    strcpy(unfound_scpt[unfound_index], script);                               \
+    ++unfound_index
+// some define to make get register's val and reference more easy
+// get reference of register from argument
+#define _ref(i) (status.get_reg_ref(_arg[i].val))
+// get value of arg[i] (immediate number or register)
+#define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
+#define _raw(i) (_arg[i].type ? -1 : _arg[i].val)
+// the type of the line
+#define lt line.get_type
+
 Num::Num(bool _type = 1, unsigned int _val = 0) {
     type = _type, val = _val;
 }
@@ -111,15 +125,6 @@ void Simulator::execute(unsigned int stop_line) {
         do_line(now_line, lines[now_line]);
     }
 }
-
-// some define to make get register's val and reference more easy
-// get reference of register from argument
-#define _ref(i) (status.get_reg_ref(_arg[i].val))
-// get value of arg[i] (immediate number or register)
-#define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
-#define _raw(i) (_arg[i].type ? -1 : _arg[i].val)
-// the type of the line
-#define lt line.get_type
 
 // Do a line, in "now_line", with Line Struction "line"
 void Simulator::do_line(unsigned int &now_line, Line line) {
@@ -283,14 +288,9 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
         }
         name[i] = '\0';
     }
-// if `line_len` == 0, which means `script` is a blank line,
-// `name` would stay as its default value "UNDEF"
-
-// receive arguments and setup a new `Line`
-#define add_unfound                                                            \
-    unfound_line[unfound_index] = current_line;                                \
-    strcpy(unfound_scpt[unfound_index], script);                               \
-    ++unfound_index
+    // if `line_len` == 0, which means `script` is a blank line,
+    // `name` would stay as its default value "UNDEF"
+    // receive arguments and setup a new `Line`
     int   s       = i;
     short type_id = TYPE.count(name) ? TYPE[name] : 0;
     // clang-format off

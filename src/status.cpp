@@ -11,6 +11,7 @@ Status::Status(/* args */) {
 
 Status::~Status() {}
 
+// read 4 byte from pointer `ptr`
 unsigned int Status::read_4_byte(unsigned char *ptr) {
     unsigned int ans = 0;
     for(int i = 0; i < 4; i++) {
@@ -19,6 +20,7 @@ unsigned int Status::read_4_byte(unsigned char *ptr) {
     }
     return ans;
 }
+// write 4 byte from pointer `ptr`
 void Status::write_4_byte(unsigned char *ptr, unsigned int x) {
     for(int i = 0; i < 4; i++) {
         ptr[i] = (unsigned char)(x & ((1 << 8) - 1));
@@ -58,6 +60,7 @@ void Status::pop(unsigned int &rd) {
 void Status::mov(unsigned int &rd, unsigned int rs) {
     rd = rs;
 }
+// do arithmetic operations
 void Status::op(unsigned int &rd,
                 unsigned int  rs1,
                 unsigned int  rs2,
@@ -75,17 +78,25 @@ void Status::op(unsigned int &rd,
         default: break;
     }
 }
+// get output file's name
 void Status::get_print_filename(bool op, char *FILENAME) {
-    if(op == 0) {
+    if(op == 0) { // `draw` action
         std::sprintf(FILENAME, "%d.bmp", ++draw_time);
     }
-    else if(op == 1) {
+    else if(op == 1) { // `end` action
         std::sprintf(FILENAME, "result.txt");
     }
 }
+// output current state to FILENAME
 void Status::print_to_bmp(const char *FILENAME) {
-    return;
+    const int H = 233,W = 2333;
+    RGB graph[H][W];
+    BMP bmp;
+    // add color
+    // Throw it to BMP 
+    bmp.print(FILENAME);
 }
+// output current state to
 void Status::print_to_txt(const char *FILENAME) {
     return;
 }
