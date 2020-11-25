@@ -140,12 +140,12 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     printf("\n");
     // sort the lines to different types
     char *filename = new char[1024];
-
+    // clang-format off
     switch(lt()) {
         case UNDEF:  // UNDEFINED
             break;
-        case DRAW:
-        case END:  // DRAW, END
+        // DRAW, END
+        case DRAW: case END:
             // get_print_name from status,  -2 -> 0 , -1 -> 1
             status.get_print_filename((bool)(lt() + 2), filename);
             switch(lt()) {
@@ -181,19 +181,14 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             status.set_reg_status(_raw(1), 0);
             break;
         // ADD, SUB, MUL, DIV, REM, AND, OR
-        case ADD:
-        case SUB:
-        case MUL:
-        case DIV:
-        case REM:
-        case AND:
-        case OR: status.op(_ref(0), _val(1), _val(2), lt() - 20); break;
+        case ADD: case SUB: case MUL: case DIV: case REM: case AND: case OR:
+            status.op(_ref(0), _val(1), _val(2), lt() - 20); 
+            break;
         // JAL, BEQ, BNE, BLT, BGE
-        case JAL: now_line = _val(0);
-        case BEQ:
-        case BNE:
-        case BLT:
-        case BGE:
+        case JAL: 
+            now_line = _val(0); 
+            break;
+        case BEQ: case BNE: case BLT: case BGE:
             if((lt() == BEQ && _val(0) == _val(1)) ||
                (lt() == BNE && _val(0) != _val(1)) ||
                (lt() == BLT && _val(0) < _val(1)) ||
@@ -213,6 +208,7 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             break;
         default: break;
     }
+    // clang-format on
     delete[] filename;
     // test part2
     static int cnt         = 0;
@@ -297,34 +293,28 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
     ++unfound_index
     int   s       = i;
     short type_id = TYPE.count(name) ? TYPE[name] : 0;
+    // clang-format off
     switch(type_id) {
-        case PUSH:
-        case POP:
-            // push/pop [rs]
+        // push/pop [r]
+        case PUSH: case POP:
             s += add_arg(script + s, args[0], 0);
             line = Line(type_id, args, 1);
             break;
-        case LOAD:
-        case STORE:
-        case MOV:
-            // load/store/mov [r],[r]
+        // load/store/mov [r],[r]
+        case LOAD: case STORE: case MOV:
             s += add_arg(script + s, args[0], 0);
             s += add_arg(script + s, args[1], 0);
             line = Line(type_id, args, 2);
             break;
         // add/sub/mul/div [rd],[rs1],[rs2/imm]
-        case ADD:
-        case SUB:
-        case MUL:
-        case DIV:
-        case AND:
-        case OR:
+        case ADD: case SUB: case MUL: case DIV: case AND: case OR:
             s += add_arg(script + s, args[0], 0);
             s += add_arg(script + s, args[1], 0);
             s += add_arg(script + s, args[2], 0);
             line = Line(type_id, args, 3);
             break;
-        case JAL:  // jal [line_id]
+        // jal [line_id]
+        case JAL:  
             s += add_arg(script + s, args[0], 1);
             if(~args[0].val)
                 line = Line(type_id, args, 1);
@@ -333,20 +323,18 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             }
             break;
         // beq/bne/blt/bge [rs1],[rs2],[line_id]
-        case BEQ:
-        case BNE:
-        case BLT:
-        case BGE:
+        case BEQ: case BNE: case BLT: case BGE:
             s += add_arg(script + s, args[0], 0);
             s += add_arg(script + s, args[1], 0);
             s += add_arg(script + s, args[2], 1);
             if(~args[2].val)
-                line = Line(BEQ, args, 3);
+                line = Line(type_id, args, 3);
             else {
                 add_unfound;
             }
             break;
-        case CALL:  // call [line_id]
+        // call [line_id]
+        case CALL:  
             s += add_arg(script + s, args[0], 1);
             if(~args[0].val)
                 line = Line(CALL, args, 1);
@@ -354,14 +342,12 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
                 add_unfound;
             }
             break;
-        case RET:
-        case END:
-        case DRAW:
-        case LINE_SYMBOL:
-        case UNDEF:  // ret/end/draw/line_symbol/undef
+        // ret/end/draw/line_symbol/undef
+        case RET: case END: case DRAW: case LINE_SYMBOL: case UNDEF:  
             line = Line(type_id, args, 0);
             break;
         default: break;
     }
+    // clang-format on
     return;
 }

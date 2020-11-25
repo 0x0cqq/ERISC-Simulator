@@ -52,7 +52,7 @@ class Status {
     void set_memory_status(unsigned int ptr);
     void set_stack_status();
     // help functions
-    
+
     unsigned int  get_reg_val(unsigned short pos);
     unsigned int &get_reg_ref(unsigned short pos);
 };
