@@ -5,8 +5,8 @@
 
 struct Num {
     bool type;
-    // `true` means immediate number
-    // `false` means register or memory address or line_to_jump (line to exec)
+    // `true` means immediate number or line_to_jump (line to exec)
+    // `false` means register
     //   (depend on the instruction)
     unsigned int val;
     // if `val` means register, we will use 0 to 31 to represent it

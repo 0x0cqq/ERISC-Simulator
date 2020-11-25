@@ -82,77 +82,24 @@ inline int strtoi(const char *s) {
     return num;
 }
 
-// receive args `[rd],[rs]` from `args_str` and store them in `args`
-inline void set_args_rd_rs(const char *args_str, Num *args) {
-    char rd[5], rs[5];
-    int  a = get_arg(args_str, rd);  // shift backwards `a` chars
-    get_arg(args_str + a, rs);
-    args[0] = Num{false, (unsigned int)REGISTER[rd]};
-    args[1] = Num{false, (unsigned int)REGISTER[rs]};
-    return;
-}
-
-// receive arg `[rd/rs]` from `args_str` and store it in `args`
-inline void set_args_r(const char *args_str, Num *args) {
-    char r[5];
-    get_arg(args_str, r);
-    args[0] = Num{false, (unsigned int)REGISTER[r]};
-    return;
-}
-
-// receive args `[rd],[rs/imm]` from `args_str` and store them in `args`
-inline void set_args_rd_imm(const char *args_str, Num *args) {
-    char rd[5], rs[11];
-    // `rs2` could be `imm`, so it has a maximun length of 10 (without '\0')
-    int a = get_arg(args_str, rd);  // shift backwards `a` chars
-    get_arg(args_str + a, rs);
-    args[0] = Num{false, (unsigned int)REGISTER[rd]};
-    'a' <= rs[0] && rs[0] <= 'z' ?
-        args[1] = Num{false, (unsigned int)REGISTER[rs]}  // is register name
-        :
-        args[1] = Num{true, (unsigned int)strtoi(rs)};  // is immediate number
-    return;
-}
-
-// receive args `[rd],[rs1],[rs2/imm]` from `args_str` and store them in `args`
-inline void set_args_rd_rs_imm(const char *args_str, Num *args) {
-    char rd[5], rs[5], rs2[11];
-    // `rs2` could be `imm`, so it has a maximun length of 10 (without '\0')
-    int a = get_arg(args_str, rd);
-    int b = get_arg(args_str + a, rs);
-    get_arg(args_str + a + b, rs2);
-    args[0] = Num{false, (unsigned int)REGISTER[rd]};
-    args[1] = Num{false, (unsigned int)REGISTER[rs]};
-    'a' <= rs2[0] && rs2[0] <= 'z' ?
-        args[2] = Num{false, (unsigned int)REGISTER[rs2]}  // is register name
-        :
-        args[2] = Num{true, (unsigned int)strtoi(rs2)};  // is immediate number
-    return;
-}
-
-// receive arg `[line_id]` from `args_str` and store it in `args`
-inline void set_args_lid(const char *args_str, Num *args) {
-    char line_id[101];
-    get_arg(args_str, line_id);
-    args[0] = Num{true, jump_line.count(line_id) ? jump_line[line_id] : -1};
-    // std::cout << line_id << " " << (jump_line.count(line_id) ?
-    // jump_line[line_id] : -1) <<  std::endl;
-    return;
-}
-
-// receive args `[rs1],[rs2],[line_id]` from `args_str`
-// and store them in `args`
-inline void set_args_rs_rs_lid(const char *args_str, Num *args) {
-    char rs1[5], rs2[5], line_id[101];
-    int  a = get_arg(args_str, rs1);
-    int  b = get_arg(args_str + a, rs2);
-    get_arg(args_str + a + b, line_id);
-    args[0] = Num{false, (unsigned int)REGISTER[rs1]};
-    args[1] = Num{false, (unsigned int)REGISTER[rs2]};
-    args[2] = Num{true, jump_line.count(line_id) ? jump_line[line_id] : -1};
-    // std::cout << line_id << " " << (jump_line.count(line_id) ?
-    // jump_line[line_id] : -1) <<  std::endl;
-    return;
+inline int add_arg(const char *args_str, Num &arg, int type) {
+    // type = 0 --> reg/imm; type = 1 --> lid
+    // modify args[i];
+    int  ans = 0;
+    char r[101];
+    ans = get_arg(args_str, r);
+    if(type == 0) {
+        arg = (('a' <= r[0] && r[0] <= 'z') ?
+                   Num{false, (unsigned int)REGISTER[r]} :
+                   Num{true, (unsigned int)strtoi(r)});
+    }
+    else if(type == 1) {
+        arg = Num{true, jump_line.count(r) ? jump_line[r] : -1};
+    }
+    else {
+        std::printf("fuckfuck!!!!\n");
+    }
+    return ans;
 }
 
 // Execute the program from now_line, and ended to stop_line(not execute)
@@ -170,7 +117,7 @@ void Simulator::execute(unsigned int stop_line) {
 #define _ref(i) (status.get_reg_ref(_arg[i].val))
 // get value of arg[i] (immediate number or register)
 #define _val(i) (_arg[i].type ? _arg[i].val : status.get_reg_val(_arg[i].val))
-#define _raw(i) (_arg[i].type ? -1 :_arg[i].val)
+#define _raw(i) (_arg[i].type ? -1 : _arg[i].val)
 // the type of the line
 #define lt line.get_type
 
@@ -192,95 +139,79 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     }
     printf("\n");
     // sort the lines to different types
-    short T        = lt();
-    T              = (T >= 0 ? (T / 10) : -((-T) / 10) - 1);
     char *filename = new char[1024];
 
-    switch(T) {
-        case -2:  // UNDEFINED
+    switch(lt()) {
+        case UNDEF:  // UNDEFINED
             break;
-        case -1:  // DRAW, END
-            // get_print_name from status
-            status.get_print_filename((bool)(lt() + 2),
-                                      filename);  // -2 -> 0 , -1 -> 1
+        case DRAW:
+        case END:  // DRAW, END
+            // get_print_name from status,  -2 -> 0 , -1 -> 1
+            status.get_print_filename((bool)(lt() + 2), filename);
             switch(lt()) {
-                case DRAW:
-                    status.print_to_bmp(filename);
-                case END:
-                    status.print_to_txt(filename);
-                default:
-                    break;
-            }
-
-            break;
-        case 0:  // LINE_SYMBOL, LOAD, STORE, PUSH, POP
-            switch(lt()) {
-                case LINE_SYMBOL:
-                    break;
-                case LOAD:
-                    status.load(_ref(0), _val(1));
-                    status.set_reg_status(_raw(0),1);
-                    status.set_memory_status(_raw(1));
-                    break;
-                case STORE:
-                    status.store(_val(0), _val(1));
-                    status.set_reg_status(_raw(0),0);
-                    status.set_memory_status(_raw(1));
-                    break;
-                case PUSH:
-                    status.push(_val(0));
-                    status.set_reg_status(_raw(0),0);
-                    status.set_stack_status();
-                    break;
-                case POP:
-                    status.pop(_ref(0));
-                    status.set_reg_status(_raw(0),1);
-                    status.set_stack_status();
-                    break;
-                default:
-                    break;
+                case DRAW: status.print_to_bmp(filename);
+                case END: status.print_to_txt(filename);
+                default: break;
             }
             break;
-        case 1:  // MOV
-            switch(lt()) {
-                case MOV:
-                    status.mov(_ref(0), _val(1));
-                    status.set_reg_status(_raw(0),1);
-                    status.set_reg_status(_raw(1),0);
-                    break;
-                default:
-                    break;
-            }
+        case LINE_SYMBOL: break;
+        case LOAD:
+            status.load(_ref(0), _val(1));
+            status.set_reg_status(_raw(0), 1);
+            status.set_memory_status(_raw(1));
             break;
-        case 2:  // ADD, SUB, MUL, DIV, REM, AND, OR
-            status.op(_ref(0), _val(1), _val(2), lt() - 20);
+        case STORE:
+            status.store(_val(0), _val(1));
+            status.set_reg_status(_raw(0), 0);
+            status.set_memory_status(_raw(1));
             break;
-        case 3:  // JAL, BEQ, BNE, BLT, BGE
-            if(lt() == JAL)
-                now_line = _val(0);
+        case PUSH:
+            status.push(_val(0));
+            status.set_reg_status(_raw(0), 0);
+            status.set_stack_status();
+            break;
+        case POP:
+            status.pop(_ref(0));
+            status.set_reg_status(_raw(0), 1);
+            status.set_stack_status();
+            break;
+        case MOV:
+            status.mov(_ref(0), _val(1));
+            status.set_reg_status(_raw(0), 1);
+            status.set_reg_status(_raw(1), 0);
+            break;
+        // ADD, SUB, MUL, DIV, REM, AND, OR
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case REM:
+        case AND:
+        case OR: status.op(_ref(0), _val(1), _val(2), lt() - 20); break;
+        // JAL, BEQ, BNE, BLT, BGE
+        case JAL: now_line = _val(0);
+        case BEQ:
+        case BNE:
+        case BLT:
+        case BGE:
             if((lt() == BEQ && _val(0) == _val(1)) ||
                (lt() == BNE && _val(0) != _val(1)) ||
                (lt() == BLT && _val(0) < _val(1)) ||
-               (lt() == BGE && _val(0) > _val(1))){
+               (lt() == BGE && _val(0) > _val(1))) {
                 now_line = _val(2);  // dst_line
-                status.set_reg_status(_raw(0),0);
-                status.set_reg_status(_raw(1),0);
+                status.set_reg_status(_raw(0), 0);
+                status.set_reg_status(_raw(1), 0);
             }
             break;
-        case 4:  // CALL, RET
-            switch(lt()) {
-                case CALL:
-                    status.push(now_line);  // not according with document
-                    now_line = _val(0);
-                    break;
-                case RET:
-                    status.pop(now_line);
-                    // printf("%d\n",(int)now_line);
-                    break;
-            }
+        case CALL:
+            status.push(now_line);  // not according with document
+            now_line = _val(0);
             break;
-        default:
+        case RET:
+            status.pop(now_line);
+            // printf("%d\n",(int)now_line);
             break;
+        default: break;
     }
     delete[] filename;
     // test part2
@@ -356,136 +287,81 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
         }
         name[i] = '\0';
     }
-    // if `line_len` == 0, which means `script` is a blank line,
-    // `name` would stay as its default value "UNDEF"
+// if `line_len` == 0, which means `script` is a blank line,
+// `name` would stay as its default value "UNDEF"
 
-    // receive arguments and setup a new `Line`
-    switch(TYPE.count(name) ? TYPE[name] : 0) {
-        case 1:  // load [rd],[rs]
-            set_args_rd_rs(script + i, args);
-            line = Line(LOAD, args, 2);
+// receive arguments and setup a new `Line`
+#define add_unfound                                                            \
+    unfound_line[unfound_index] = current_line;                                \
+    strcpy(unfound_scpt[unfound_index], script);                               \
+    ++unfound_index
+    int   s       = i;
+    short type_id = TYPE.count(name) ? TYPE[name] : 0;
+    switch(type_id) {
+        case PUSH:
+        case POP:
+            // push/pop [rs]
+            s += add_arg(script + s, args[0], 0);
+            line = Line(type_id, args, 1);
             break;
-        case 2:  // store [rd],[rs]
-            set_args_rd_rs(script + i, args);
-            line = Line(STORE, args, 2);
+        case LOAD:
+        case STORE:
+        case MOV:
+            // load/store/mov [r],[r]
+            s += add_arg(script + s, args[0], 0);
+            s += add_arg(script + s, args[1], 0);
+            line = Line(type_id, args, 2);
             break;
-        case 3:  // push [rs]
-            set_args_r(script + i, args);
-            line = Line(PUSH, args, 1);
+        // add/sub/mul/div [rd],[rs1],[rs2/imm]
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case AND:
+        case OR:
+            s += add_arg(script + s, args[0], 0);
+            s += add_arg(script + s, args[1], 0);
+            s += add_arg(script + s, args[2], 0);
+            line = Line(type_id, args, 3);
             break;
-        case 4:  // pop [rd]
-            set_args_r(script + i, args);
-            line = Line(POP, args, 1);
-            break;
-        case 10:  // mov [rd],[rs/imm]
-            set_args_rd_imm(script + i, args);
-            line = Line(MOV, args, 2);
-            break;
-        case 20:  // add [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(ADD, args, 3);
-            break;
-        case 21:  // sub [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(SUB, args, 3);
-            break;
-        case 22:  // mul [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(MUL, args, 3);
-            break;
-        case 23:  // div [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(DIV, args, 3);
-            break;
-        case 24:  // rem [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(REM, args, 3);
-            break;
-        case 25:  // and [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(AND, args, 3);
-            break;
-        case 26:  // or [rd],[rs1],[rs2/imm]
-            set_args_rd_rs_imm(script + i, args);
-            line = Line(OR, args, 3);
-            break;
-        case 30:  // jal [line_id]
-            set_args_lid(script + i, args);
+        case JAL:  // jal [line_id]
+            s += add_arg(script + s, args[0], 1);
             if(~args[0].val)
-                line = Line(JAL, args, 1);
+                line = Line(type_id, args, 1);
             else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
+                add_unfound;
             }
             break;
-        case 31:  // beq [rs1],[rs2],[line_id]
-            set_args_rs_rs_lid(script + i, args);
+        // beq/bne/blt/bge [rs1],[rs2],[line_id]
+        case BEQ:
+        case BNE:
+        case BLT:
+        case BGE:
+            s += add_arg(script + s, args[0], 0);
+            s += add_arg(script + s, args[1], 0);
+            s += add_arg(script + s, args[2], 1);
             if(~args[2].val)
                 line = Line(BEQ, args, 3);
             else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
+                add_unfound;
             }
             break;
-        case 32:  // bne [rs1],[rs2],[line_id]
-            set_args_rs_rs_lid(script + i, args);
-            if(~args[2].val)
-                line = Line(BNE, args, 3);
-            else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
-            }
-            break;
-        case 33:  // blt [rs1],[rs2],[line_id]
-            set_args_rs_rs_lid(script + i, args);
-            if(~args[2].val)
-                line = Line(BLT, args, 3);
-            else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
-            }
-            break;
-        case 34:  // bge [rs1],[rs2],[line_id]
-            set_args_rs_rs_lid(script + i, args);
-            if(~args[2].val)
-                line = Line(BGE, args, 3);
-            else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
-            }
-            break;
-        case 41:  // call [line_id]
-            set_args_lid(script + i, args);
+        case CALL:  // call [line_id]
+            s += add_arg(script + s, args[0], 1);
             if(~args[0].val)
                 line = Line(CALL, args, 1);
             else {
-                unfound_line[unfound_index] = current_line;
-                strcpy(unfound_scpt[unfound_index], script);
-                ++unfound_index;
+                add_unfound;
             }
             break;
-        case 42:  // ret
-            line = Line(RET, args, 0);
+        case RET:
+        case END:
+        case DRAW:
+        case LINE_SYMBOL:
+        case UNDEF:  // ret/end/draw/line_symbol/undef
+            line = Line(type_id, args, 0);
             break;
-        case -1:  // end
-            line = Line(END, args, 0);
-            break;
-        case -2:  // draw
-            line = Line(DRAW, args, 0);
-            break;
-        case 0:  // line symbol
-            line = Line(LINE_SYMBOL, args, 0);
-            break;
-        case -10:  // UNDEF
-            line = Line(UNDEF, args, 0);
-            break;
-        default:
-            break;
+        default: break;
     }
     return;
 }

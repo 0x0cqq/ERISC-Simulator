@@ -114,12 +114,12 @@ void Status::print_raw(const char *FILENAME){
 }
 
 void Status::set_reg_status(unsigned short pos,bool op){
-    if(pos == -1) return;
+    if(pos == (unsigned short)(-1)) return;
     output_status.reg_rw[pos] |= (1<<op);
 }
 // op == 0 read, op == 1 write
 void Status::set_memory_status(unsigned int ptr){
-    if(ptr == -1) return;
+    if(ptr == (unsigned int)(-1)) return;
     output_status.mem_rw[ptr/output_status.MEMORY_BLOCK_SIZE] = true;
 } 
 void Status::set_stack_status(){
