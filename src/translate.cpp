@@ -1,5 +1,6 @@
 #include "translate.h"
-
+#include <fstream>
+#include <cstring>
 /*
 -----The EEC++ Language writing document-----
 PART0 Introduction
@@ -32,4 +33,17 @@ PART3 What you cannot do
 
 Translate::Translate(/* args */) {}
 
+
+void Translate::read(const char * FILENAME){
+    std::memset(script,0,sizeof(script));
+    std::ifstream f(FILENAME, std::ios::in);
+    f.read(script,sizeof(script));
+    // to be done: judge the vaildity
+}
+
 Translate::~Translate() {}
+
+
+// void Translate::parse() {
+    
+// }

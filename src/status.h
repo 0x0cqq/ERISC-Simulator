@@ -14,6 +14,9 @@ class Status {
     unsigned int     read_4_byte(unsigned char *ptr);
     void             write_4_byte(unsigned char *ptr, unsigned int x);
     struct Output_status {
+        // op == 0 read, op == 1 write
+        // status == 3 --> r&w; status == 0 --> x; 
+        // status == 1 --> r; status == 2 --> w;
         static const int MEMORY_BLOCK_SIZE = ((1 << 8) << 10);
         unsigned short   reg_rw[Status::REGISTER_NUM];
         bool             mem_rw[Status::MEMORY_SIZE / MEMORY_BLOCK_SIZE];

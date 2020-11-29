@@ -109,12 +109,14 @@ void Status::print_raw(const char *FILENAME) {
     f_out.close();
 }
 
+// op == 0 read, op == 1 write
+// status == 3 --> r&w; status == 0 --> x; status == 1 --> r; status == 2 --> w;
 void Status::set_reg_status(unsigned short pos, bool op) {
     if(pos == (unsigned short)(-1))
         return;
     output_status.reg_rw[pos] |= (1 << op);
 }
-// op == 0 read, op == 1 write
+
 void Status::set_memory_status(unsigned int ptr) {
     if(ptr == (unsigned int)(-1))
         return;
