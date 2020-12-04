@@ -16,11 +16,14 @@ AlignEscapedNewlines: Right
 # 左对齐逃脱换行(使用反斜杠换行)的反斜杠
 AlignEscapedNewlinesLeft:	true
 # 水平对齐二元和三元表达式的操作数
-AlignOperands:	true
+AlignOperands:	false
 # 对齐连续的尾随的注释
 AlignTrailingComments:	true
 # 对齐连续的预处理
 AlignConsecutiveMacros: true
+# 三元运算符之前的换行
+BreakBeforeTernaryOperators : true
+
  
 # 允许函数声明的所有参数在放在下一行
 AllowAllParametersOfDeclarationOnNextLine:	false
