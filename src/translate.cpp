@@ -1,6 +1,8 @@
 #include "translate.h"
+#include <iostream>
 #include <fstream>
 #include <cstring>
+#include <cstdio>
 /*
 -----The EEC++ Language writing document-----
 PART0 Introduction
@@ -32,16 +34,29 @@ PART3 What you cannot do
 */
 
 Translate::Translate(/* args */) {}
+Translate::~Translate() {}
 
-
-void Translate::read(const char * FILENAME){
-    std::memset(script,0,sizeof(script));
+// read from "FILENAME"
+int Translate::read(const char * FILENAME){
+    std::memset(scr,0,sizeof(scr));
     std::ifstream f(FILENAME, std::ios::in);
-    f.read(script,sizeof(script));
-    // to be done: judge the vaildity
+    f.seekg(0, std::ios::end);
+    int S = f.tellg();
+    f.seekg(0, std::ios::beg);
+    if(S > MAXLEN) 
+        throw std::runtime_error("script too long");
+    f.read(scr,S);
+    return S;
 }
 
-Translate::~Translate() {}
+void Translate::print(){
+    std::cout << scr;
+}
+
+
+
+
+
 
 
 // void Translate::parse() {

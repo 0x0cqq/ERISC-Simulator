@@ -19,23 +19,6 @@
 // the type of the line
 #define lt line.get_type
 
-Num::Num(bool _type = 1, unsigned int _val = 0) {
-    type = _type, val = _val;
-}
-Num::~Num() {}
-
-Line::Line() {
-    type = UNDEF;
-}
-
-Line::Line(const short &t, const Num *args, const int &arg_n) {
-    type = t;
-    for(int i = 0; i < arg_n; ++i)
-        arg[i] = args[i];
-}
-
-Line::~Line() {}
-
 Simulator::Simulator(/* args */) {
     now_line = 0;
 }
