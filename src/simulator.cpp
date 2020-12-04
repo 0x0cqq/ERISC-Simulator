@@ -163,12 +163,14 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
         case LOAD:
             status.load(_ref(0), _val(1));
             status.set_reg_status(_raw(0), 1);
-            status.set_memory_status(_raw(1));
+            status.set_reg_status(_raw(1), 0);
+            status.set_memory_status(_val(1));
             break;
         case STORE:
             status.store(_val(0), _val(1));
             status.set_reg_status(_raw(0), 0);
-            status.set_memory_status(_raw(1));
+            status.set_reg_status(_raw(1), 0);
+            status.set_memory_status(_val(1));
             break;
         case PUSH:
             status.push(_val(0));
@@ -188,6 +190,9 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
         // ADD, SUB, MUL, DIV, REM, AND, OR
         case ADD: case SUB: case MUL: case DIV: case REM: case AND: case OR:
             status.op(_ref(0), _val(1), _val(2), lt() - 20); 
+            status.set_reg_status(_raw(0), 1);
+            status.set_reg_status(_raw(1), 0);
+            status.set_reg_status(_raw(2), 0);
             break;
         // JAL, BEQ, BNE, BLT, BGE
         case JAL: 

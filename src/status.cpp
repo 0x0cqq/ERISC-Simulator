@@ -89,12 +89,12 @@ void Status::get_print_filename(bool op, char *FILENAME) {
 }
 // output current state to FILENAME
 void Status::print_to_bmp(const char *FILENAME) {
-    const int H = 233,W = 2333;
-    RGB graph[H][W];
-    BMP bmp;
-    // add color
-    // Throw it to BMP 
-    bmp.print(FILENAME);
+    // std::printf("I didn't fool you!\n");
+    // const int H = 233,W = 2333;
+    // RGB graph[H][W];
+    BMP *bmp = new BMP;
+    bmp->print(FILENAME,output_status.reg_rw,output_status.mem_rw,output_status.stack_rw);
+    delete bmp;
 }
 // output current state to
 void Status::print_to_txt(const char *FILENAME) {
