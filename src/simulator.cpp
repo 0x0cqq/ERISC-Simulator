@@ -19,7 +19,11 @@
 // the type of the line
 #define lt line.get_type
 
-Num::Num(bool _type = 1, unsigned int _val = 0) {
+Num::Num(){
+    type = 1,val = 0;
+}
+
+Num::Num(bool _type, unsigned int _val) {
     type = _type, val = _val;
 }
 Num::~Num() {}
@@ -111,7 +115,8 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
         arg = Num{true, jump_line.count(r) ? jump_line[r] : -1};
     }
     else {
-        std::printf("fuckfuck!!!!\n");
+        // std::printf("fuckfuck!!!!\n");
+        std::cerr << "fuck" << std::endl;
     }
     return ans;
 }
@@ -134,15 +139,15 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
         _arg[i] = line.get_arg(i);
     }
     // test part
-    std::printf("now_line:%d\n", now_line);
-    std::printf("  type:%d arg:", line.get_type());
+    std::cout << "now_line:" << now_line << std::endl;
+    std::cout << "  type:" << line.get_type() << " arg:";
     // usleep(10000);
     for(int i = 0; i < 3; i++) {
-        printf("(%d,%d)", int(_arg[i].type), _arg[i].val);
+        std::cout << "(" << int(_arg[i].type) << "," << ")";
         if(i < 2)
-            printf(",");
+            std::cout << ",";
     }
-    printf("\n");
+    std::cout << std::endl;
     // sort the lines to different types
     char *filename = new char[1024];
     // clang-format off
@@ -154,8 +159,12 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
             // get_print_name from status,  -2 -> 0 , -1 -> 1
             status.get_print_filename((bool)(lt() + 2), filename);
             switch(lt()) {
-                case DRAW: status.print_to_bmp(filename);
-                case END: status.print_to_txt(filename);
+                case DRAW: 
+                    status.print_to_bmp(filename);
+                    break;
+                case END: 
+                    status.print_to_txt(filename);
+                    break;
                 default: break;
             }
             break;
@@ -221,12 +230,12 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     // clang-format on
     delete[] filename;
     // test part2
-    static int cnt         = 0;
-    char *     tmpfilename = new char[1024];
-    std::sprintf(tmpfilename, "%d.txt", cnt);
-    status.print_raw(tmpfilename);
-    cnt++;
-    delete[] tmpfilename;
+    // static int cnt         = 0;
+    // char *     tmpfilename = new char[1024];
+    // std::sprintf(tmpfilename, "%d.txt", cnt);
+    // status.print_raw(tmpfilename);
+    // cnt++;
+    // delete[] tmpfilename;
     // end test part 2
     now_line++;  // jump to the next line
     if(lt() == END)
@@ -246,9 +255,8 @@ void Simulator::parse_file(const char *FILENAME) {
         parse(line_str, lines[current_line], current_line);
         current_line++;
         if(current_line == MAX_INSTRUCTION) {
-            printf("Maximum instructions limit reached.\n"
-                   "Instructions after line %d will be ignored.\n",
-                   MAX_INSTRUCTION);
+            std::cout << "Maximum instructions limit reached.\n" << 
+                   "Instructions after line" << MAX_INSTRUCTION << "will be ignored." << std::endl; 
             // TODO: raise exception?
             break;
         }

@@ -98,14 +98,25 @@ void Status::print_to_bmp(const char *FILENAME) {
 }
 // output current state to
 void Status::print_to_txt(const char *FILENAME) {
+    std::ofstream f_out(FILENAME);
+    for(int i = 0;i<REGISTER_NUM;i++){
+        f_out << std::setiosflags(std::ios::uppercase) <<std::setw(8) << std::setfill('0') << std::setprecision(8) << std::hex << x[i];
+        f_out << (i == REGISTER_NUM - 1 ? "\n" : " ");
+    }
+    const int LINE_LEN = 64;
+    for(int i = 0;i<MEMORY_SIZE;i++){
+        f_out << std::setiosflags(std::ios::uppercase) << std::setw(2) << std::setfill('0') << std::setprecision(8) << std::hex << (unsigned short)memory[i];
+        f_out << (i % LINE_LEN == LINE_LEN-1? "\n" : " ");        
+    }
+    f_out.close();
     return;
 }
 void Status::print_raw(const char *FILENAME) {
     std::ofstream f_out(FILENAME, std::ios::binary);
     f_out.write((char *)(x), sizeof(x));
-    // f_out.write((char*)(memory),sizeof(memory));
-    // f_out.write((char*)(stack),sizeof(stack));
-    // printf("stack_ptr:%d\n",int(stack_ptr - stack));
+    f_out.write((char*)(memory),sizeof(memory));
+    f_out.write((char*)(stack),sizeof(stack));
+    // f_out.writeline("stack_ptr:%d\n",int(stack_ptr - stack));
     f_out.close();
 }
 
