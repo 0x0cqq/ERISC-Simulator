@@ -43,11 +43,13 @@ int Translate::read(const char * FILENAME){
     f.seekg(0, std::ios::end);
     int S = f.tellg();
     f.seekg(0, std::ios::beg);
-    if(S > MAXLEN) 
-        throw std::runtime_error("script too long");
+    if(S > MAXLEN) throw std::runtime_error("script too long");
     f.read(scr,S);
     return S;
 }
+
+
+
 
 void Translate::print(){
     std::cout << scr;
