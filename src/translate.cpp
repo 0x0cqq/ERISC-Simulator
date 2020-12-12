@@ -1,6 +1,9 @@
 #include "translate.h"
+#include <iostream>
 #include <fstream>
 #include <cstring>
+#include <cstdio>
+#include <cctype>
 /*
 -----The EEC++ Language writing document-----
 PART0 Introduction
@@ -32,18 +35,47 @@ PART3 What you cannot do
 */
 
 Translate::Translate(/* args */) {}
-
-
-void Translate::read(const char * FILENAME){
-    std::memset(script,0,sizeof(script));
-    std::ifstream f(FILENAME, std::ios::in);
-    f.read(script,sizeof(script));
-    // to be done: judge the vaildity
-}
-
 Translate::~Translate() {}
 
+// read from "FILENAME"
+int Translate::read(const char * FILENAME){
+    std::memset(scr,0,sizeof(scr));
+    std::ifstream f(FILENAME, std::ios::in);
+    f.seekg(0, std::ios::end);
+    int S = f.tellg();
+    f.seekg(0, std::ios::beg);
+    if(S > MAXLEN) throw std::runtime_error("script too long");
+    f.read(scr,S);
+    return S;
+}
 
-// void Translate::parse() {
-    
+
+
+
+void Translate::print(){
+    std::cout << scr;
+}
+
+// int get_header()
+
+// int split_to_parts(const char * scr,int * pos){
+//     // return number of functions.
+//     // read script from `*scr`, store function start pos at `pos[i]`
+//     int i = 0,cnt = 0,flag = 0,_from = 0;
+//     while(scr[i] != 0){
+//         if(scr[i] == '{') flag = 1,_from = i;
+//         if(scr[i] == '{') cnt++;
+//         if(scr[i] == '}') cnt--;
+//         if(flag == 1 && cnt == 0){ // function ends
+            
+//             return 1 + split_to_parts(scr+i+1,pos+1);
+//         }
+//         i++;
+//     }
+//     return 0;
 // }
+
+
+void Translate::parse() {
+    
+}

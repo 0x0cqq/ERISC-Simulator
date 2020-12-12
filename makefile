@@ -1,7 +1,7 @@
 cc = g++
 prom = ./bin/main # 目标
-deps = $(shell find ./ -name "*.h") # 找到所有 .h 文件
-src = $(shell find ./ -name "*.cpp") # 找到所有 .cpp 文件
+deps = $(shell find ./src/ -name "*.h") # 找到所有 .h 文件
+src = $(shell find ./src/ -name "*.cpp") # 找到所有 .cpp 文件
 obj = $(src:%.cpp=%.o)  # 把所有 .cpp 换成 .o
 
 $(prom): $(obj) # 编译主文件
