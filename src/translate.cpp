@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <cstdio>
+#include <cctype>
 /*
 -----The EEC++ Language writing document-----
 PART0 Introduction
@@ -55,12 +56,26 @@ void Translate::print(){
     std::cout << scr;
 }
 
+// int get_header()
 
-
-
-
-
-
-// void Translate::parse() {
-    
+// int split_to_parts(const char * scr,int * pos){
+//     // return number of functions.
+//     // read script from `*scr`, store function start pos at `pos[i]`
+//     int i = 0,cnt = 0,flag = 0,_from = 0;
+//     while(scr[i] != 0){
+//         if(scr[i] == '{') flag = 1,_from = i;
+//         if(scr[i] == '{') cnt++;
+//         if(scr[i] == '}') cnt--;
+//         if(flag == 1 && cnt == 0){ // function ends
+            
+//             return 1 + split_to_parts(scr+i+1,pos+1);
+//         }
+//         i++;
+//     }
+//     return 0;
 // }
+
+
+void Translate::parse() {
+    
+}
