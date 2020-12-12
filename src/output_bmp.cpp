@@ -7,7 +7,7 @@ void BMP::wr(int x, int s = 1) {
 
 void BMP::upd() {
     std::fwrite("BM", 2, 1, fout);
-	std::fwrite(&sz, 4, 1, fout);
+    std::fwrite(&sz, 4, 1, fout);
     for(int i = 1; i <= pct; i++)
         std::fwrite(&lst[i][0], lst[i][1], 1, fout);
 }
@@ -45,7 +45,10 @@ void BMP::color(coor a, int sign) {
     }
 }
 
-void BMP::print(const char *FILENAME,unsigned short reg_rw[32],bool mem_rw[16],bool stack_rw) {
+void BMP::print(const char *   FILENAME,
+                unsigned short reg_rw[32],
+                bool           mem_rw[16],
+                bool           stack_rw) {
     for(int i = 0; i < 32; ++i) {
         ro       = i / 8;
         co       = i % 8;

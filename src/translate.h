@@ -13,7 +13,7 @@ class Translate {
   public:
     int read(const char *FILENAME);
     void print();
-    void Translate::parse();
+    void parse();
     Translate(/* args */);
     ~Translate();
 };
