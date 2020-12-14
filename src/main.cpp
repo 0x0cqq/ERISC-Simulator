@@ -1,12 +1,12 @@
 #include "simulator.h"
-#include "translate.h"
+#include "translator.h"
 #include <iostream>
 using namespace std;
 
 
 
 int main(int argc, char const *argv[]) {
-    Simulator *a = new Simulator;
+    
     char *type = new char[1231];
     char *filename = new char[1231];
     cout << "argc: " << argc << endl;
@@ -17,11 +17,14 @@ int main(int argc, char const *argv[]) {
         sscanf(argv[1], "%s", type);
         sscanf(argv[2], "%s", filename);
         if(type[0] == 'e'){
+            Simulator *a = new Simulator;
             a->parse_file(filename);
             a->execute();
         }
         else if(type[0] == 't'){
-            ;
+            Translator *a = new Translator;
+            a->read(filename);
+            a->parse();
         }
         else{
             cout << "fatal: no such a option in parameter 1." << endl;

@@ -103,11 +103,16 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
 void Simulator::execute(unsigned int stop_line) {
+    int cnt = 0;
     while(true) {
+        if(cnt % 1000000 == 0)
+            std::cout << "Current executed Lines: " << cnt << std::endl;
         if(now_line == stop_line || now_line == lines_num)
             break;
         do_line(now_line, lines[now_line]);
+        cnt++;
     }
+    std::cout << "--Total executed Lines: " << cnt << " --" << std::endl;
 }
 
 // Do a line, in "now_line", with Line Struction "line"
@@ -118,15 +123,15 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
         _arg[i] = line.get_arg(i);
     }
     // test part
-    std::cout << "now_line:" << now_line << std::endl;
-    std::cout << "  type:" << line.get_type() << " arg:";
-    // usleep(10000);
-    for(int i = 0; i < 3; i++) {
-        std::cout << "(" << int(_arg[i].type) << "," << ")";
-        if(i < 2)
-            std::cout << ",";
-    }
-    std::cout << std::endl;
+    // std::cout << "now_line:" << now_line << std::endl;
+    // std::cout << "  type:" << line.get_type() << " arg:";
+    // // usleep(10000);
+    // for(int i = 0; i < 3; i++) {
+    //     std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) << ")"; 
+    //     if(i < 2)
+    //         std::cout << ",";
+    // }
+    // std::cout << std::endl;
     // sort the lines to different types
     char *filename = new char[1024];
     // clang-format off
@@ -225,17 +230,21 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
 // and store the instuctions in `Simulator.lines`
 void Simulator::parse_file(const char *FILENAME) {
     std::ifstream risc_file(FILENAME, std::ios::in);
+    char          tmp_str[Simulator::MAX_LINE_COL];
     char          line_str[Simulator::MAX_LINE_COL];  // instruction line
     int           current_line = 0;  // current line index (0-index)
 
     // parse the input file line by line
-    while(risc_file.getline(line_str, sizeof(line_str))) {
+    // while(risc_file.getline(line_str, sizeof(line_str))) {
+    while(risc_file.getline(tmp_str, sizeof(tmp_str))) {
+        std::sscanf(tmp_str, "%[^\n/]", line_str);
         // setup an instruction line
         parse(line_str, lines[current_line], current_line);
         current_line++;
         if(current_line == MAX_INSTRUCTION) {
-            std::cout << "Maximum instructions limit reached.\n" << 
-                   "Instructions after line" << MAX_INSTRUCTION << "will be ignored." << std::endl; 
+            std::cout << "Maximum instructions limit reached.\n"
+                      << "Instructions after line" << MAX_INSTRUCTION
+                      << "will be ignored." << std::endl;
             // TODO: raise exception?
             break;
         }

@@ -1,8 +1,8 @@
 #ifndef __SIMULATOR_H_
 #define __SIMULATOR_H_
 
-#include "status.h"
 #include "program.h"
+#include "status.h"
 
 class Simulator {
   private:

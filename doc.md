@@ -130,7 +130,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 或者直接编译 `main.cpp` 亦可。
 
-### 哪些undefined的行为被我们defined了
+### 哪些 undefined 的行为被我们 define了
 
 1. ERISC 源代码中可以出现空行，会被忽略。
 

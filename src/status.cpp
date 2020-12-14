@@ -1,10 +1,18 @@
 #include "status.h"
 #include "output_bmp.h"
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 
 Status::Status(/* args */) {
+    // std::memset(this,0,sizeof(Status));
+    for(int i = 0; i < REGISTER_NUM; i++)
+        x[i] = 0;
+    for(int i = 0; i < MEMORY_SIZE; i++)
+        memory[i] = 0;
+    for(int i = 0; i < STACK_SIZE; i++)
+        stack[i] = 0;
     stack_ptr = stack + STACK_SIZE;
     draw_time = 0;
 }
@@ -31,12 +39,14 @@ void Status::write_4_byte(unsigned char *ptr, unsigned int x) {
 void Status::load(unsigned int &rd, unsigned int ptr) {
     if(ptr + 4 > MEMORY_SIZE)
         throw std::runtime_error("memory overread");
+    // printf("load ptr:%d rd:%d\n",int(ptr),int(rd));
     rd = read_4_byte(memory + ptr);
 }
 // store data from register rs to memory[ptr]
 void Status::store(unsigned int rs, unsigned int ptr) {
     if(ptr + 4 > MEMORY_SIZE)
         throw std::runtime_error("memory overstore");
+    // printf("store ptr:%d rs:%d\n",int(ptr),int(rs));
     write_4_byte(memory + ptr, rs);
 }
 // push register rs into stack
@@ -80,10 +90,10 @@ void Status::op(unsigned int &rd,
 }
 // get output file's name
 void Status::get_print_filename(bool op, char *FILENAME) {
-    if(op == 0) { // `draw` action
+    if(op == 0) {  // `draw` action
         std::sprintf(FILENAME, "%d.bmp", ++draw_time);
     }
-    else if(op == 1) { // `end` action
+    else if(op == 1) {  // `end` action
         std::sprintf(FILENAME, "result.txt");
     }
 }
@@ -93,20 +103,24 @@ void Status::print_to_bmp(const char *FILENAME) {
     // const int H = 233,W = 2333;
     // RGB graph[H][W];
     BMP *bmp = new BMP;
-    bmp->print(FILENAME,output_status.reg_rw,output_status.mem_rw,output_status.stack_rw);
+    bmp->print(FILENAME, output_status.reg_rw, output_status.mem_rw,
+               output_status.stack_rw);
     delete bmp;
 }
 // output current state to
 void Status::print_to_txt(const char *FILENAME) {
     std::ofstream f_out(FILENAME);
-    for(int i = 0;i<REGISTER_NUM;i++){
-        f_out << std::setiosflags(std::ios::uppercase) <<std::setw(8) << std::setfill('0') << std::setprecision(8) << std::hex << x[i];
+    for(int i = 0; i < REGISTER_NUM; i++) {
+        f_out << std::setiosflags(std::ios::uppercase) << std::setw(8)
+              << std::setfill('0') << std::setprecision(8) << std::hex << x[i];
         f_out << (i == REGISTER_NUM - 1 ? "\n" : " ");
     }
     const int LINE_LEN = 64;
-    for(int i = 0;i<MEMORY_SIZE;i++){
-        f_out << std::setiosflags(std::ios::uppercase) << std::setw(2) << std::setfill('0') << std::setprecision(8) << std::hex << (unsigned short)memory[i];
-        f_out << (i % LINE_LEN == LINE_LEN-1? "\n" : " ");        
+    for(int i = 0; i < MEMORY_SIZE; i++) {
+        f_out << std::setiosflags(std::ios::uppercase) << std::setw(2)
+              << std::setfill('0') << std::setprecision(8) << std::hex
+              << (unsigned short)memory[i];
+        f_out << (i % LINE_LEN == LINE_LEN - 1 ? "\n" : " ");
     }
     f_out.close();
     return;
@@ -114,8 +128,8 @@ void Status::print_to_txt(const char *FILENAME) {
 void Status::print_raw(const char *FILENAME) {
     std::ofstream f_out(FILENAME, std::ios::binary);
     f_out.write((char *)(x), sizeof(x));
-    f_out.write((char*)(memory),sizeof(memory));
-    f_out.write((char*)(stack),sizeof(stack));
+    f_out.write((char *)(memory), sizeof(memory));
+    f_out.write((char *)(stack), sizeof(stack));
     // f_out.writeline("stack_ptr:%d\n",int(stack_ptr - stack));
     f_out.close();
 }

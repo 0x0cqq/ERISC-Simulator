@@ -1,12 +1,12 @@
-#ifndef __TRANSLATE_H_
-#define __TRANSLATE_H_
+#ifndef __Translator_H_
+#define __Translator_H_
 #include "program.h"
 
 class Function {
     
 };
 
-class Translate {
+class Translator {
   private:
     static const int MAXLEN = (1<<20);
     char scr[MAXLEN];
@@ -14,7 +14,7 @@ class Translate {
     int read(const char *FILENAME);
     void print();
     void parse();
-    Translate(/* args */);
-    ~Translate();
+    Translator();
+    ~Translator();
 };
 #endif

@@ -1,0 +1,90 @@
+mov a1,0x1
+mov a2,0x2
+mov a3,0x3
+mov a4,0x4
+mov a6,0x100000
+mov a7,0x01010101
+mov s11,0x01000000
+mov s10,0x00010000
+mov s9,0x00000100
+mov s8,0x00000001
+mov s7,0x00010101
+mov s6,0x01000101
+mov s5,0x01010001
+mov s4,0x01010100
+
+mov s1,x0
+loopp: // 循环变量放在s1
+store a7 s1
+add s1,s1,a4
+blt s1,a6,loopp 
+
+draw
+mov s1,a2
+loopa:// 循环变量放在 s1
+mov t2,s1
+call getval
+beq t2,x0,isnotaprime
+add s2,s1,s1
+loopb:// 循环变量放在 s2
+call changeval
+add s2,s2,s1
+blt s2,a6,loopb
+isnotaprime:
+
+add s1,s1,a1
+blt s1,a6,loopa
+draw
+end
+
+// t3, t4, t5 是三个变量
+// t3 放 load/store 的目标位置 (mod 4)
+// t4放具体字节个数（mod 4）
+getval: // 参数在s1，获取第i位置的结果，结果放在t2
+rem t5,s1,a4 //获取在字节中的位置
+sub t4,s1,t5 //刨去余数，获取字节位置
+load t6,t4
+beq t5,x0,caseaa
+beq t5,a1,caseab
+beq t5,a2,caseac
+beq t5,a3,casead
+caseaa:
+and t6,t6,s8
+jal endcasea
+caseab:
+and t6,t6,s9
+jal endcasea
+caseac:
+and t6,t6,s10
+jal endcasea
+casead:
+and t6,t6,s11
+jal endcasea
+endcasea:
+mov t2,t6
+ret
+
+changeval: // 参数在s2，把第i位置的结果设置成1
+rem t5,s2,a4 //获取在字节中的位置
+sub t4,s2,t5 //除32，获取字节位置
+mov t6,0
+load t6,t4 
+beq t5,x0,caseba
+beq t5,a1,casebb
+beq t5,a2,casebc
+beq t5,a3,casebd
+caseba:
+and t6,t6,s4
+jal endcaseb
+casebb:
+and t6,t6,s5
+jal endcaseb
+casebc:
+and t6,t6,s6
+jal endcaseb
+casebd:
+and t6,t6,s7
+jal endcaseb
+endcaseb:
+store t6,t4
+ret
