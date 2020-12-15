@@ -34,6 +34,7 @@ class Status {
 
   public:
     Status(/* args */);
+    void reset();
     ~Status();
     // simulator functions
 

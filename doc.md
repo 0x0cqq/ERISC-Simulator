@@ -42,7 +42,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 文件作用及构成介绍如下：
 
-### `main.cpp`：
+### `main.cpp`
 
 调用 `simulator.h` 中的 `Simulator`  类。
 
@@ -74,37 +74,27 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 定义 `BMP` 类，用于接收 `status` 类传递的空间使用状态，并输出可视化的BMP。
 
-### `translate.h` & `translate.cpp`
-
-无调用。
-
-定义 `Translate` 类型，用于翻译一种类 C++ 语言代码至 ERISC 代码。（还没写完）
-
 ## 任务完成情况
 
 ### 必做任务
 
-程序模拟：完全完成
+程序模拟：完成
 
-结果可视化（bmp）输出：完全完成
+结果可视化（bmp）输出：完成
 
-结果文本（txt）输出：完全完成
+结果文本（txt）输出：完成
 
 必做任务1：成功运行，输出结果见 `./output/test_1` 。
 
 必做任务2：成功运行，输出结果见 `./output/test_2`。
 
-必做任务3：（由 xxx 编写 C++ 代码，由该项目翻译为 ERISC 代码，成功运行。输出结果见 `./output/test_3` 。）
+必做任务3：成功编写并运行。输出结果见 `./output/test_3` 。
 
-必做任务4：（由 xxx 编写 C++ 代码，由该项目翻译为 ERISC 代码，成功运行。输出结果见 `./output/test_4` 。）
+必做任务4：成功编写并运行。输出结果见 `./output/test_4` 。
 
 ### 选做任务
 
-（选座任务0：在 ERISC 模拟器中加入文件读写与屏幕读写。）
-
-（选做任务1：将类C++代码翻译为 ERISC 代码。）
-
-（选做任务2：将该项目翻译为 ERISC 代码。）
+（选做任务0：在 ERISC 模拟器中加入文件读写与屏幕读写。）
 
 ## 使用说明
 
@@ -114,15 +104,13 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 1. 第一个参数是可执行文件本身
 2. 第二个参数是执行任务类型【只有第一个字母有意义】
-   1. `e(xecute)` 代表运行 ERISC 程序
-   2. `t(ranslate)` 代表翻译类 C++ 语言代码成为 ERISC 语言代码。
+   1. `e(xecute)` 代表运行 ERISC 程序。
+   2. 
 3. 第三个参数给出输入文件路径。
 
 例如：
 
 `$ ./bin/main execute ./input/test_1.risc` 将会运行第一个示例代码。
-
-（`$ ./bin/main translate ./input/test_3.cpp` 将会把 `test_3.cpp` 翻译成为 ERISC 代码并输出。）
 
 ### 关于项目编译
 
@@ -143,5 +131,3 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 ### 关于寄存器、内存限制的修改
 
 1. 可以在 `status.h` 中修改 `MEMORY_SIZE` 、`STACK_SIZE` 、`REGISTER_NUM` 手动扩容寄存器、内存，但是这并没有什么用处，因为其他地方都没适配
-
-### 关于 `translate.cpp` 的使用

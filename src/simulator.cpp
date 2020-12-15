@@ -5,11 +5,9 @@
 #include <map>
 // #include <unistd.h>
 
+// clang-format off
 // some define to make code more elegant
-#define add_unfound                                                            \
-    unfound_line[unfound_index] = current_line;                                \
-    strcpy(unfound_scpt[unfound_index], script);                               \
-    ++unfound_index
+#define add_unfound unfound_line[unfound_index] = current_line;strcpy(unfound_scpt[unfound_index], script);++unfound_index
 // some define to make get register's val and reference more easy
 // get reference of register from argument
 #define _ref(i) (status.get_reg_ref(_arg[i].val))
@@ -18,9 +16,23 @@
 #define _raw(i) (_arg[i].type ? -1 : _arg[i].val)
 // the type of the line
 #define lt line.get_type
+// clang-format on
+
+void Simulator::reset() {
+    for(int i = 0; i < MAX_INSTRUCTION; i++) {
+        unfound_line[i] = 0;
+        for(int j = 0; j < MAX_LINE_COL; j++) {
+            unfound_scpt[i][j] = 0;
+        }
+    }
+    lines_num = now_line = unfound_index = 0;
+    for(int i = 0; i < MAX_INSTRUCTION; i++) {
+        lines[i].reset();
+    }
+}
 
 Simulator::Simulator(/* args */) {
-    now_line = 0;
+    reset();
 }
 
 Simulator::~Simulator() {}
@@ -49,13 +61,6 @@ std::map<std::string, short> TYPE = {
 // a hash map from the name of line_id to its line number
 std::map<std::string, unsigned int> jump_line;
 
-// index of lines whose argument [line_id] appeared before its declaration
-int unfound_line[1000];
-// script of instuctions above
-char unfound_scpt[1000][100];
-// index of `UNFOUND_LINE` and `UNFOUND_LINE_ID`
-int unfound_index = 0;
-
 // get the next argument in the string `args_str` and store it in `arg`
 // the next arg appears at `args_str + get_arg()` (if there is one)
 // spaces will be ignored
@@ -63,9 +68,9 @@ inline int get_arg(const char *args_str, char *arg) {
     int len   = strlen(args_str);
     int i     = 0;  // index of `arg_str`
     int index = 0;  // index of `arg`
-    while(i < len && args_str[i] == ' ')
+    while(i < len && (args_str[i] == ' ' || args_str[i]  == ',' || args_str[i] == '\n'))
         ++i;
-    while(i < len && args_str[i] != ' ' && args_str[i] != ',')
+    while(i < len && args_str[i] != ' ' && args_str[i] != ',' && args_str[i] != '\n')
         arg[index++] = args_str[i++];
     arg[index] = '\0';
     return i + 1;
@@ -85,6 +90,8 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
     int  ans = 0;
     char r[101];
     ans = get_arg(args_str, r);
+    // std::cout << "arg: \"";
+    // std::cout << args_str << "\"" << std::endl;
     if(type == 0) {
         arg = (('a' <= r[0] && r[0] <= 'z') ?
                    Num{false, (unsigned int)REGISTER[r]} :
@@ -94,7 +101,6 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
         arg = Num{true, jump_line.count(r) ? jump_line[r] : -1};
     }
     else {
-        // std::printf("fuckfuck!!!!\n");
         std::cerr << "fuck" << std::endl;
     }
     return ans;
@@ -103,20 +109,27 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
 void Simulator::execute(unsigned int stop_line) {
-    int cnt = 0;
+    static int cnt = -1;
+    if(cnt == -1)
+        cnt = 0;
     while(true) {
         if(cnt % 1000000 == 0)
             std::cout << "Current executed Lines: " << cnt << std::endl;
         if(now_line == stop_line || now_line == lines_num)
             break;
-        do_line(now_line, lines[now_line]);
-        cnt++;
+        int end_flag = do_line(now_line, lines[now_line]);
+        if(end_flag != 0) {
+            break;
+        }
+        else {
+            cnt++;
+        }
     }
     std::cout << "--Total executed Lines: " << cnt << " --" << std::endl;
 }
 
 // Do a line, in "now_line", with Line Struction "line"
-void Simulator::do_line(unsigned int &now_line, Line line) {
+int Simulator::do_line(unsigned int &now_line, Line line) {
     Num _arg[3];
     // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
@@ -127,8 +140,8 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     // std::cout << "  type:" << line.get_type() << " arg:";
     // // usleep(10000);
     // for(int i = 0; i < 3; i++) {
-    //     std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) << ")"; 
-    //     if(i < 2)
+    //     std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) <<
+    //     ")"; if(i < 2)
     //         std::cout << ",";
     // }
     // std::cout << std::endl;
@@ -222,51 +235,62 @@ void Simulator::do_line(unsigned int &now_line, Line line) {
     // delete[] tmpfilename;
     // end test part 2
     now_line++;  // jump to the next line
+
     if(lt() == END)
-        now_line = -1;  // set an end signal
+        return -1;  // set an end signal
+    else
+        return 0;
 }
 
 // parse input file `FILENAME`(.risc)
 // and store the instuctions in `Simulator.lines`
 void Simulator::parse_file(const char *FILENAME) {
+    // index of `UNFOUND_LINE` and `UNFOUND_LINE_ID`
+
     std::ifstream risc_file(FILENAME, std::ios::in);
     char          tmp_str[Simulator::MAX_LINE_COL];
     char          line_str[Simulator::MAX_LINE_COL];  // instruction line
-    int           current_line = 0;  // current line index (0-index)
+    std::memset(tmp_str,0,sizeof(tmp_str));
+    std::memset(line_str,0,sizeof(tmp_str));
 
+    int           current_line = 0;  // current line index (0-index)
     // parse the input file line by line
-    // while(risc_file.getline(line_str, sizeof(line_str))) {
     while(risc_file.getline(tmp_str, sizeof(tmp_str))) {
-        std::sscanf(tmp_str, "%[^\n/]", line_str);
         // setup an instruction line
-        parse(line_str, lines[current_line], current_line);
+        std::sscanf(tmp_str, "%[^\n/]", line_str);
+        parse(line_str, lines[current_line], current_line,0);
+        // std::cout << line_str << std::endl;
         current_line++;
         if(current_line == MAX_INSTRUCTION) {
             std::cout << "Maximum instructions limit reached.\n"
                       << "Instructions after line" << MAX_INSTRUCTION
                       << "will be ignored." << std::endl;
-            // TODO: raise exception?
+            // maybe: raise exception?
             break;
         }
+        std::memset(tmp_str,0,sizeof(tmp_str));
+        std::memset(line_str,0,sizeof(line_str));
     }
-
     // deal with the instuctions whose argument [line_id]
     // appeared before its declaration
     while(unfound_index--) {
-        // std::cout << "Unfound" << unfound_index << std::endl;
         parse(unfound_scpt[unfound_index], lines[unfound_line[unfound_index]],
-              unfound_line[unfound_index]);  // re-parse the scripts
+              unfound_line[unfound_index], 1);  // re-parse the scripts
     }
     // record line_num into the simulator, to end the execute
     lines_num = current_line;
     risc_file.close();
+    std::cout << "Finish parsing." << std::endl;
     return;
 }
 
 // parse a single line `script` (the `current_line`th) and store it in `line`
-void Simulator::parse(const char *script, Line &line, int current_line) {
+void Simulator::parse(const char *script,
+                      Line &      line,
+                      int         current_line,
+                      bool        unfounded) {
     // std::cerr << current_line << std::endl;
-    char name[Simulator::MAX_LINE_COL] = "UNDEF";  // instruction name
+    char name[Simulator::MAX_LINE_COL] = "UNDEFINED";  // instruction name
     Num  args[3];                                  // arguments
     int  i        = 0;                             // index of `line`
     int  line_len = strlen(script);                // length of `line`
@@ -279,16 +303,21 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
                 break;
             }
             if(script[i] == ':') {  // is line_ID
-                // std::cout << "Line Symbol:" << current_line << std::endl;
-                name[i]         = '\0';
+                name[i] = '\0';
+                // std::cout << "name: \"" << name << "\"" << std::endl;
+                if(jump_line.count(name)) {
+                    throw std::runtime_error("duplicate symbols:  ");
+                    return;
+                }
                 jump_line[name] = current_line;  // the next line index // no!
-                // std::cout << "Line Symbol:" << jump_line[name] << std::endl;
                 break;
             }
             name[i] = script[i];  // add a character to `name`
         }
         name[i] = '\0';
     }
+    // std::cout << "Line Symbol:\"" << current_line << " " << name << "\"" << std::endl;
+    // std::cout << "scr: \"" << script << "\"" << std::endl;
     // if `line_len` == 0, which means `script` is a blank line,
     // `name` would stay as its default value "UNDEF"
     // receive arguments and setup a new `Line`
@@ -314,12 +343,14 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             s += add_arg(script + s, args[2], 0);
             line = Line(type_id, args, 3);
             break;
-        // jal [line_id]
-        case JAL:  
+        // jal [line_id] // call [line_id]
+        case JAL: case CALL:
             s += add_arg(script + s, args[0], 1);
-            if(~args[0].val)
+            if(~args[0].val){
                 line = Line(type_id, args, 1);
+            }
             else {
+                if(unfounded) throw std::runtime_error("missing symbols:");
                 add_unfound;
             }
             break;
@@ -328,18 +359,11 @@ void Simulator::parse(const char *script, Line &line, int current_line) {
             s += add_arg(script + s, args[0], 0);
             s += add_arg(script + s, args[1], 0);
             s += add_arg(script + s, args[2], 1);
-            if(~args[2].val)
+            if(~args[2].val){
                 line = Line(type_id, args, 3);
-            else {
-                add_unfound;
             }
-            break;
-        // call [line_id]
-        case CALL:  
-            s += add_arg(script + s, args[0], 1);
-            if(~args[0].val)
-                line = Line(CALL, args, 1);
             else {
+                if(unfounded) throw std::runtime_error("missing symbols:  ");
                 add_unfound;
             }
             break;

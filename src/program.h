@@ -12,6 +12,7 @@ class Num {
     Num();
     Num(bool _type, unsigned int _val);
     ~Num();
+    void reset();
 };
 
 class Line {
@@ -50,6 +51,7 @@ class Line {
     short get_type() {
         return type;
     }
+    void reset();
     Num get_arg(unsigned int i) {
         return arg[i];
     }

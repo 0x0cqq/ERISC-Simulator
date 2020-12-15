@@ -7,6 +7,10 @@
 
 Status::Status(/* args */) {
     // std::memset(this,0,sizeof(Status));
+    reset();
+}
+
+void Status::reset(){
     for(int i = 0; i < REGISTER_NUM; i++)
         x[i] = 0;
     for(int i = 0; i < MEMORY_SIZE; i++)
