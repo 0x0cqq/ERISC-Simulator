@@ -29,6 +29,7 @@ void Simulator::reset() {
     for(int i = 0; i < MAX_INSTRUCTION; i++) {
         lines[i].reset();
     }
+    status.reset();
 }
 
 Simulator::Simulator(/* args */) {
@@ -230,12 +231,11 @@ int Simulator::do_line(unsigned int &now_line, Line line) {
     // static int cnt         = 0;
     // char *     tmpfilename = new char[1024];
     // std::sprintf(tmpfilename, "%d.txt", cnt);
-    // status.print_raw(tmpfilename);
+    // status.print_to_txt(tmpfilename);
     // cnt++;
     // delete[] tmpfilename;
     // end test part 2
     now_line++;  // jump to the next line
-
     if(lt() == END)
         return -1;  // set an end signal
     else
@@ -295,6 +295,8 @@ void Simulator::parse(const char *script,
     int  i        = 0;                             // index of `line`
     int  line_len = strlen(script);                // length of `line`
 
+    std::cout << "  line: \"" <<  script << "\"" << std::endl;
+
     // receive instruction name
     if(line_len) {  // not blank line
         for(; i < line_len; ++i) {
@@ -336,8 +338,8 @@ void Simulator::parse(const char *script,
             s += add_arg(script + s, args[1], 0);
             line = Line(type_id, args, 2);
             break;
-        // add/sub/mul/div [rd],[rs1],[rs2/imm]
-        case ADD: case SUB: case MUL: case DIV: case AND: case OR:
+        // add/sub/mul/rem/div [rd],[rs1],[rs2/imm]
+        case ADD: case SUB: case MUL: case DIV: case REM: case AND: case OR:
             s += add_arg(script + s, args[0], 0);
             s += add_arg(script + s, args[1], 0);
             s += add_arg(script + s, args[2], 0);
