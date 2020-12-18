@@ -7,7 +7,6 @@
 #include <iomanip>
 
 Status::Status(/* args */) {
-    // std::memset(this,0,sizeof(Status));
     reset();
 }
 
@@ -29,7 +28,6 @@ unsigned int Status::read_4_byte(unsigned char *ptr) {
     unsigned int ans = 0;
     for(int i = 0; i < 4; i++) {
         ans = (ans << 8) | (unsigned int)(ptr[4 - i - 1]);
-        // printf("ptr[%d]:%d\n",i,(int)(ptr[4-i-1]));
     }
     return ans;
 }
@@ -50,14 +48,12 @@ void Status::write(unsigned int rs){
 void Status::load(unsigned int &rd, unsigned int ptr) {
     if(ptr + 4 > MEMORY_SIZE)
         throw std::runtime_error("memory overread");
-    // printf("load ptr:%d rd:%d\n",int(ptr),int(rd));
     rd = read_4_byte(memory + ptr);
 }
 // store data from register rs to memory[ptr]
 void Status::store(unsigned int rs, unsigned int ptr) {
     if(ptr + 4 > MEMORY_SIZE)
         throw std::runtime_error("memory overstore");
-    // printf("store ptr:%d rs:%d\n",int(ptr),int(rs));
     write_4_byte(memory + ptr, rs);
 }
 // push register rs into stack

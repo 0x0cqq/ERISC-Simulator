@@ -15,7 +15,7 @@ class Status {
     void             write_4_byte(unsigned char *ptr, unsigned int x);
     struct Output_status {
         // op == 0 read, op == 1 write
-        // status == 3 --> r&w; status == 0 --> x; 
+        // status == 3 --> r&w; status == 0 --> x;
         // status == 1 --> r; status == 2 --> w;
         static const int MEMORY_BLOCK_SIZE = ((1 << 8) << 10);
         unsigned short   reg_rw[Status::REGISTER_NUM];
@@ -37,7 +37,7 @@ class Status {
     void reset();
     ~Status();
     // simulator functions
-    
+
     void load(unsigned int &rd, unsigned int ptr);
     void store(unsigned int rs, unsigned int ptr);
     void read(unsigned int &rd);
@@ -48,7 +48,7 @@ class Status {
     void op(unsigned int &rd, unsigned int rs1, unsigned int rs2, short type);
     // output functions
 
-    void get_print_filename(bool op, char *FILENAME,const char * STORE_PATH);
+    void get_print_filename(bool op, char *FILENAME, const char *STORE_PATH);
     void print_to_bmp(const char *FILENAME);  // op = 0
     void print_to_txt(const char *FILENAME);  // op = 1
     void print_raw(const char *FILENAME);

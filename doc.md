@@ -8,16 +8,27 @@ ERISC（Extremely Reduced Instruction Set Computer, 极度精简指令集）的 
 
 A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which is the final project of the course "Fundamentals of Programming(30240233-2)" in Tsinghua University.
 
-### 碎碎念
+## 亮点
 
-> 我觉得，这个项目里（绝大多数的）代码，还是很优雅的，对吗？
+总体上来说，本项目浅度使用了面向对象的编程技术，采用类和结构体对程序内容进行封装，以达到代码的易用性、易扩展性、易维护性。
+
+具体来说，小组成员认为本项目有如下亮点：
+
++ 代码注释充分：绝大多数核心代码均有注释。
++ 代码风格一致：组内使用 VSCode 的 Clang-format 插件统一代码风格。
++ 程序结构清晰：我们先进行了总体框架的搭建，随后才进行具体代码工作。
++ 开发记录完整：我们使用 GitHub 管理代码，所有代码历史公开可查 ([ERISC-Simulator](https://github.com/ChenQiqian/ERISC-Simulator)) 。
++ 程序实现精巧：虽然有大量注释以及头文件，但本项目总体代码仅有约 1000 行。
+  + 寄存器和立即数的处理：
+  + 巧用宏定义减少代码量：
++ 程序稳健性强：对于 `line_symbol` 、操作的操作数等易错的地方，进行了合法性检查并抛出异常。
 
 ## 小组人员及分工
 
 | 姓名   | 班级   | 学号 | 分工                                                         |
 | ------ | ------ | ---- | ------------------------------------------------------------ |
-| 陈启乾 | 软件03 | \*\*\*\*\*\*\*\*\*\* | （组长）<br/>总体框架搭建<br/>`simulator` 类的 `execute` 与 `do_line` 函数<br/>其他杂七杂八的函数 |
-| 任自厚 | 软件02 |  \*\*\*\*\*\*\*\*\*\*    | `simulator` 类的 `parse` 相关函数                            |
+| 陈启乾 | 软件03 | \*\*\*\*\*\*\*\*\*\* | （组长）<br/>总体框架搭建<br/>`simulator` 类的 `execute` 与 `do_line` 函数<br/>杂七杂八的工作 |
+| 任自厚 | 软件02 |  \*\*\*\*\*\*\*\*\*\*    | 总体框架搭建<br/>`simulator` 类的 `parse` 相关函数                 |
 | 武文静 | 计05   |  \*\*\*\*\*\*\*\*\*\*    | `output_bmp` 的相关函数、`status` 类的函数                   |
 | 梅雨   | 计06   |  \*\*\*\*\*\*\*\*\*\*    | `output_bmp` 的相关函数、`status` 类的函数                   |
 
@@ -26,7 +37,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 本程序采用面向对象的方法编程，`src` 目录文件组织如下：
 
 ```
-.
+./src/
 ├── main.cpp
 ├── output_bmp.cpp
 ├── output_bmp.h
@@ -35,9 +46,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 ├── simulator.cpp
 ├── simulator.h
 ├── status.cpp
-├── status.h
-├── translate.cpp
-└── translate.h
+└── status.h
 ```
 
 文件作用及构成介绍如下：
@@ -60,11 +69,11 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 定义 `Num` 类，用作多用途的“数“（既可以表示立即数，也可以表示某个寄存器中的数）。
 
-定义 `Line` 类，用来存储 ERISC 程序中的某行，记录该行的类型、1～3个参数。
+定义 `Line` 类，用来存储 ERISC 程序中的某行，记录该行的类型、0～3 个参数。
 
 ### `simulator.h` & `simulator.cpp`
 
-调用 `program.h` 与 `status.h`
+调用 `program.h` 与 `status.h`。
 
 定义 `Simulator` 类，用来模拟程序的运行；内含一个 `Status` 对象，用来存储“虚拟机”的物理情况；内含若干 `Line` 对象，用来存储源代码。类中包含 `parse` 方法，用来将源代码结构化并存储到 `Line` 对象中；类中包含 `execute` 方法和 `do_line` 方法，用来执行代码，修改虚拟机中的物理情况。
 
@@ -78,56 +87,122 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 ### 必做任务
 
-程序模拟：完成
+#### 命令模拟
 
-结果可视化（bmp）输出：完成
+全部完成。
 
-结果文本（txt）输出：完成
+| 命令名称      | 程序代码                                |
+| ------------- | --------------------------------------- |
+| 内存数据加载  | `load [rd],[rs]`                        |
+| 内存数据存入  | `store [rs],[rd]`                       |
+| 入栈          | `push [rs]`                             |
+| 出栈          | `pop [rd]`                              |
+| 寄存器赋值    | `mov [rd],[rs/imm]`                     |
+| 寄存器加/减   | `add/sub [rd],[rs1],[rs2/imm]`          |
+| 寄存器乘/除   | `mul/div [rd],[rs1],[rs2/imm]`          |
+| 寄存器取余    | `rem [rd],[rs1],[rs2/imm]`              |
+| 寄存器位与/或 | `and/or [rd],[rs1],[rs2/imm]`           |
+| 行标识        | `[line_id]:`                            |
+| 无条件跳转    | `jal [line_id]`                         |
+| 条件跳转      | `beq/bne/blt/bge [rs1],[rs2],[line_id]` |
 
-必做任务1：成功运行，输出结果见 `./output/test_1` 。
+#### 结果可视化（bmp）输出
 
-必做任务2：成功运行，输出结果见 `./output/test_2`。
+完成，结果大致如下图：
 
-必做任务3：成功编写并运行。输出结果见 `./output/test_3` 。
+<img src="1.jpg" style="zoom: 400%;" />
 
-必做任务4：成功编写并运行。输出结果见 `./output/test_4` 。
+#### 结果文本（txt）输出
+
+完成。见对应输入文件的 `result.txt` 。
+
+#### 必做任务完成情况
+
+必做任务1：成功运行，输出结果见 `./sample_output/test_1` 。
+
+必做任务2：成功运行，输出结果见 `./sample_output/test_2` 。
+
+必做任务3：成功编写并运行。代码输出结果见 `./sample_output/test_3` 。
+
+必做任务4：成功编写 $O(n \log n)$ 的素数筛并运行，共计运行约 29336423 行命令得到最后的答案。代码见 `./input/test_4.risc` ，输出结果见 `./sample_output/test_4` 。
 
 ### 选做任务
 
-（选做任务0：在 ERISC 模拟器中加入文件读写与屏幕读写。）
+#### 命令增加
+
+加入屏幕读写命令。
+
+| 命令名称           | 程序代码     | 具体说明                                                    |
+| ------------------ | ------------ | ----------------------------------------------------------- |
+| 从屏幕读取到寄存器 | `read [rd]`  | 从屏幕(`cin`)读入一个字节，存在 `rd` 的最低 `8` 位。        |
+| 从寄存器输出到屏幕 | `write [rs]` | 将 `rs` 的最低 `8` 位作为一个 `char` 输出到从屏幕(`cout`)。 |
+
+#### 调试模式
+
+> 这汇编，也太难调了吧！（来自写了2个多小时汇编素数筛的同学）
+
+于是，加入了 debug 模式。在 debug 模式中，程序输出更多信息，并且可以在运行过程中指定的一些行暂停程序，进行变量的查看。具体使用方法见下文。
+
+#### 空行、注释支持
+
+空行会被忽略。
+
+每一行中第一个 `/` 字符之后的所有字符均会被忽略，因此可以使用 `//some comments` 的类似 C++ 的方式来编写注释。调试和编码都因此方便多了！
+
+#### 简单的代码的合法性检查
+
+1. 对未出现的行标识、重复出现的行标识符号进行了判断并抛出异常，防止出现一些不可预料的行为。
+2. 对未被定义的命令进行了判断并抛出异常，帮助编码者在自己拼错命令的时候快速 debug。
 
 ## 使用说明
 
-### 关于 `main.cpp` 主函数的参数情况
-
-包括可执行文件本身，`main.cpp` 接收三个参数：
-
-1. 第一个参数是可执行文件本身
-2. 第二个参数是执行任务类型【只有第一个字母有意义】
-   1. `e(xecute)` 代表运行 ERISC 程序。
-   2. 
-3. 第三个参数给出输入文件路径。
-
-例如：
-
-`$ ./bin/main execute ./input/test_1.risc` 将会运行第一个示例代码。
-
 ### 关于项目编译
 
-本项目配上了一个 `makefile` 文件，里面使用了 `findall` 命令，默认使用的编译器命令是 `g++-10` ，如需编译项目，可根据具体情况使用 `makefile` 文件。`makefile` 编译出来的可执行文件放在 `./bin/main` 文件处
+本项目配上了一个 `makefile` 文件，里面使用了 `findall` 命令，默认使用的编译器命令是 `g++-10` ，如需编译项目，可根据具体情况使用 `makefile` 文件。
+
+`makefile` 编译出来的可执行文件放在 `./bin/main` 处。
 
 或者直接编译 `main.cpp` 亦可。
 
-### 哪些 undefined 的行为被我们 define了
+### 关于 `main.cpp` 的主函数使用
 
-1. ERISC 源代码中可以出现空行，会被忽略。
+包括可执行文件本身，`main.cpp` 接收三～四个参数：
 
-### 哪些行为会出问题
+1. 第一个参数是可执行文件本身
+2. 第二个参数是执行任务类型【只有第一个字母有意义】
+   1. `e(xecute)` 代表模拟运行 ERISC 程序。
+   2. `d(ebug)` 代表以调试模式运行 ERISC 程序。
+3. 第三个参数给出输入文件路径。
+4. 【可选】第四个参数给出输出文件存储路径。（如果不给出将在输入文件的同级文件夹下新建以该文件除去后缀名并加上 `_out` 为名的文件夹）
 
-1. ERISC 源代码最大 10000 行，如果超出将只阅读前 10000 行。
-2. ERISC 源代码每行不能超过 100个字符。
+例如：
+
+`$ ./bin/main execute input/test_1.risc` 将会运行第一个示例代码，输出在 `./test_1_out` 文件夹下 。
+
+`$ ./bin/main execute input/test_1.risc sample_output_1` 将会运行第一个示例代码，输出在 `./sample_output_1` 文件夹下 。
+
+`$ ./bin/main debug input/test_2.risc` 将会以**调试模式**运行第二个示例代码，输出在 `./test_2_out` 文件夹下 。
+
+需要注意：
+
++ `main.cpp` 中使用 `mkdir` 和 `rm` 的命令行命令来创建输出文件存储路径，需要保证命令行上有这两个命令。
+
+### 关于 `debug` 模式的使用
+
+`debug` 模式下，程序将会提供更为详尽的处理过程输出，并提供在程序运行过程中暂停以查看变量等功能。
+
+如何进入 `debug` 模式请参见上文。
+
+#### 如何设置断点
+
+#### 如何在断点处查看变量
+
+#### 如何单步运行
+
+### 一些未定义行为的处理方法
+
+1. 函数等定义应该放在最后，否则会出问题。
+2. ERISC 源代码最大 10000 行，如果超出将只阅读前 10000 行。
 3. ERISC 源代码只支持 ASCII码。
+4. ERISC 源代码每行不能超过 100个字符。
 
-### 关于寄存器、内存限制的修改
-
-1. 可以在 `status.h` 中修改 `MEMORY_SIZE` 、`STACK_SIZE` 、`REGISTER_NUM` 手动扩容寄存器、内存，但是这并没有什么用处，因为其他地方都没适配

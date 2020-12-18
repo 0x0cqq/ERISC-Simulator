@@ -19,7 +19,7 @@
 // clang-format on
 
 void Simulator::reset() {
-    debug_mode = 0;
+    debug_mode    = 0;
     unfound_index = 0;
     for(int i = 0; i < MAX_INSTRUCTION; i++) {
         unfound_line[i] = 0;
@@ -40,7 +40,7 @@ Simulator::Simulator(/* args */) {
 
 Simulator::~Simulator() {}
 
-void Simulator::set_debug_mode(int x){
+void Simulator::set_debug_mode(int x) {
     debug_mode = x;
 }
 
@@ -117,7 +117,7 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
 
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
-void Simulator::execute(const char * OUTPUT_PATH, unsigned int stop_line) {
+void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
     static int cnt = -1;
     if(cnt == -1)
         cnt = 0;
@@ -126,7 +126,7 @@ void Simulator::execute(const char * OUTPUT_PATH, unsigned int stop_line) {
             std::cout << "Current executed Lines: " << cnt << std::endl;
         if(now_line == stop_line || now_line == lines_num)
             break;
-        int end_flag = do_line(now_line, lines[now_line],OUTPUT_PATH);
+        int end_flag = do_line(now_line, lines[now_line], OUTPUT_PATH);
         if(end_flag != 0) {
             break;
         }
@@ -138,20 +138,23 @@ void Simulator::execute(const char * OUTPUT_PATH, unsigned int stop_line) {
 }
 
 // Do a line, in "now_line", with Line Struction "line"
-int Simulator::do_line(unsigned int &now_line, Line line,const char * output_path) {
+int Simulator::do_line(unsigned int &now_line,
+                       Line          line,
+                       const char *  output_path) {
     Num _arg[3];
     // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
         _arg[i] = line.get_arg(i);
     }
     // test part
-    if(debug_mode){
+    if(debug_mode) {
         std::cout << "now_line:" << now_line << std::endl;
         std::cout << "  type:" << line.get_type() << " arg:";
         // usleep(10000);
         for(int i = 0; i < 3; i++) {
-            std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) <<
-            ")"; if(i < 2)
+            std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val)
+                      << ")";
+            if(i < 2)
                 std::cout << ",";
         }
         std::cout << std::endl;
@@ -245,7 +248,7 @@ int Simulator::do_line(unsigned int &now_line, Line line,const char * output_pat
     // clang-format on
     delete[] filename;
     // test part2
-    if(debug_mode >= 2){
+    if(debug_mode >= 2) {
         static int cnt         = 0;
         char *     tmpfilename = new char[1024];
         std::sprintf(tmpfilename, "%d.txt", cnt);
