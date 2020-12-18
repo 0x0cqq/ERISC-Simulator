@@ -1,6 +1,7 @@
-.DS_Store
-*/.DS_Store
-*.o
+*
+!*.*
 *.bmp
 *.txt
-*
+*.o
+.DS_Store
+*/.DS_Store

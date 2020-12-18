@@ -2,7 +2,8 @@ mov a1,0x1
 mov a2,0x2
 mov a3,0x3
 mov a4,0x4
-mov a6,0x100000
+mov a5,0x100000
+mov a6,1000000
 mov a7,0x01010101
 mov s11,0x01000000
 mov s10,0x00010000
@@ -22,16 +23,15 @@ blt s1,a6,loopp
 draw
 mov s1,a2
 loopa:// 循环变量放在 s1
-mov t2,s1
 call getval
-beq t2,x0,isnotaprime
+beq t2,x0,innerend
 add s2,s1,s1
 loopb:// 循环变量放在 s2
+blt a6,s2,innerend
 call changeval
 add s2,s2,s1
-blt s2,a6,loopb
-isnotaprime:
-
+jal loopb
+innerend:
 add s1,s1,a1
 blt s1,a6,loopa
 draw

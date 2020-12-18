@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
 
 Status::Status(/* args */) {
@@ -38,6 +39,12 @@ void Status::write_4_byte(unsigned char *ptr, unsigned int x) {
         ptr[i] = (unsigned char)(x & ((1 << 8) - 1));
         x >>= 8;
     }
+}
+void Status::read(unsigned int &rd){
+    rd = (~((~rd) & ((1<<8)-1))) | (unsigned int)(std::cin.get());
+}
+void Status::write(unsigned int rs){
+    std::cout.put((rs & ((1<<8)-1)));
 }
 // load data from memory[ptr] to register rd
 void Status::load(unsigned int &rd, unsigned int ptr) {
@@ -93,19 +100,16 @@ void Status::op(unsigned int &rd,
     }
 }
 // get output file's name
-void Status::get_print_filename(bool op, char *FILENAME) {
+void Status::get_print_filename(bool op, char *FILENAME,const char * STORE_PATH) {
     if(op == 0) {  // `draw` action
-        std::sprintf(FILENAME, "%d.bmp", ++draw_time);
+        std::sprintf(FILENAME, "%s/%d.bmp", STORE_PATH,++draw_time);
     }
     else if(op == 1) {  // `end` action
-        std::sprintf(FILENAME, "result.txt");
+        std::sprintf(FILENAME, "%s/result.txt",STORE_PATH);
     }
 }
 // output current state to FILENAME
 void Status::print_to_bmp(const char *FILENAME) {
-    // std::printf("I didn't fool you!\n");
-    // const int H = 233,W = 2333;
-    // RGB graph[H][W];
     BMP *bmp = new BMP;
     bmp->print(FILENAME, output_status.reg_rw, output_status.mem_rw,
                output_status.stack_rw);

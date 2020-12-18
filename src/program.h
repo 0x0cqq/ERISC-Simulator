@@ -40,7 +40,8 @@ class Line {
 #define BGE         34
 #define CALL        41
 #define RET         42
-
+#define READ        51
+#define WRITE       52
     short type;
     Num   arg[3];
 
@@ -52,7 +53,7 @@ class Line {
         return type;
     }
     void reset();
-    Num get_arg(unsigned int i) {
+    Num  get_arg(unsigned int i) {
         return arg[i];
     }
 };

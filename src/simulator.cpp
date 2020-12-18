@@ -19,6 +19,8 @@
 // clang-format on
 
 void Simulator::reset() {
+    debug_mode = 0;
+    unfound_index = 0;
     for(int i = 0; i < MAX_INSTRUCTION; i++) {
         unfound_line[i] = 0;
         for(int j = 0; j < MAX_LINE_COL; j++) {
@@ -37,6 +39,10 @@ Simulator::Simulator(/* args */) {
 }
 
 Simulator::~Simulator() {}
+
+void Simulator::set_debug_mode(int x){
+    debug_mode = x;
+}
 
 std::map<std::string, int> REGISTER = {
     {"x0", 0},   {"zero", 0}, {"x1", 1},   {"ra", 1},  {"x2", 2},   {"sp", 2},
@@ -57,7 +63,7 @@ std::map<std::string, short> TYPE = {
     {"add", ADD},         {"sub", SUB},   {"mul", MUL},   {"div", DIV},
     {"rem", REM},         {"and", AND},   {"or", OR},     {"jal", JAL},
     {"beq", BEQ},         {"bne", BNE},   {"blt", BLT},   {"bge", BGE},
-    {"call", CALL},       {"ret", RET}};
+    {"call", CALL},       {"ret", RET},   {"read", READ}, {"write", WRITE}};
 
 // a hash map from the name of line_id to its line number
 std::map<std::string, unsigned int> jump_line;
@@ -69,9 +75,11 @@ inline int get_arg(const char *args_str, char *arg) {
     int len   = strlen(args_str);
     int i     = 0;  // index of `arg_str`
     int index = 0;  // index of `arg`
-    while(i < len && (args_str[i] == ' ' || args_str[i]  == ',' || args_str[i] == '\n'))
+    while(i < len &&
+          (args_str[i] == ' ' || args_str[i] == ',' || args_str[i] == '\n'))
         ++i;
-    while(i < len && args_str[i] != ' ' && args_str[i] != ',' && args_str[i] != '\n')
+    while(i < len && args_str[i] != ' ' && args_str[i] != ',' &&
+          args_str[i] != '\n')
         arg[index++] = args_str[i++];
     arg[index] = '\0';
     return i + 1;
@@ -109,7 +117,7 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
 
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
-void Simulator::execute(unsigned int stop_line) {
+void Simulator::execute(const char * OUTPUT_PATH, unsigned int stop_line) {
     static int cnt = -1;
     if(cnt == -1)
         cnt = 0;
@@ -118,7 +126,7 @@ void Simulator::execute(unsigned int stop_line) {
             std::cout << "Current executed Lines: " << cnt << std::endl;
         if(now_line == stop_line || now_line == lines_num)
             break;
-        int end_flag = do_line(now_line, lines[now_line]);
+        int end_flag = do_line(now_line, lines[now_line],OUTPUT_PATH);
         if(end_flag != 0) {
             break;
         }
@@ -130,32 +138,34 @@ void Simulator::execute(unsigned int stop_line) {
 }
 
 // Do a line, in "now_line", with Line Struction "line"
-int Simulator::do_line(unsigned int &now_line, Line line) {
+int Simulator::do_line(unsigned int &now_line, Line line,const char * output_path) {
     Num _arg[3];
     // get a copy of line's arg
     for(int i = 0; i < 3; i++) {
         _arg[i] = line.get_arg(i);
     }
     // test part
-    // std::cout << "now_line:" << now_line << std::endl;
-    // std::cout << "  type:" << line.get_type() << " arg:";
-    // // usleep(10000);
-    // for(int i = 0; i < 3; i++) {
-    //     std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) <<
-    //     ")"; if(i < 2)
-    //         std::cout << ",";
-    // }
-    // std::cout << std::endl;
+    if(debug_mode){
+        std::cout << "now_line:" << now_line << std::endl;
+        std::cout << "  type:" << line.get_type() << " arg:";
+        // usleep(10000);
+        for(int i = 0; i < 3; i++) {
+            std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val) <<
+            ")"; if(i < 2)
+                std::cout << ",";
+        }
+        std::cout << std::endl;
+    }
     // sort the lines to different types
     char *filename = new char[1024];
     // clang-format off
     switch(lt()) {
-        case UNDEF:  // UNDEFINED
+        case UNDEF:case LINE_SYMBOL: 
             break;
         // DRAW, END
         case DRAW: case END:
             // get_print_name from status,  -2 -> 0 , -1 -> 1
-            status.get_print_filename((bool)(lt() + 2), filename);
+            status.get_print_filename((bool)(lt() + 2), filename,output_path);
             switch(lt()) {
                 case DRAW: 
                     status.print_to_bmp(filename);
@@ -166,7 +176,6 @@ int Simulator::do_line(unsigned int &now_line, Line line) {
                 default: break;
             }
             break;
-        case LINE_SYMBOL: break;
         case LOAD:
             status.load(_ref(0), _val(1));
             status.set_reg_status(_raw(0), 1);
@@ -178,6 +187,14 @@ int Simulator::do_line(unsigned int &now_line, Line line) {
             status.set_reg_status(_raw(0), 0);
             status.set_reg_status(_raw(1), 0);
             status.set_memory_status(_val(1));
+            break;
+        case READ:
+            status.read(_ref(0));
+            status.set_reg_status(_raw(0),1);
+            break;
+        case WRITE:
+            status.write(_val(0));
+            status.set_reg_status(_raw(0),0);
             break;
         case PUSH:
             status.push(_val(0));
@@ -228,12 +245,14 @@ int Simulator::do_line(unsigned int &now_line, Line line) {
     // clang-format on
     delete[] filename;
     // test part2
-    // static int cnt         = 0;
-    // char *     tmpfilename = new char[1024];
-    // std::sprintf(tmpfilename, "%d.txt", cnt);
-    // status.print_to_txt(tmpfilename);
-    // cnt++;
-    // delete[] tmpfilename;
+    if(debug_mode >= 2){
+        static int cnt         = 0;
+        char *     tmpfilename = new char[1024];
+        std::sprintf(tmpfilename, "%d.txt", cnt);
+        status.print_to_txt(tmpfilename);
+        cnt++;
+        delete[] tmpfilename;
+    }
     // end test part 2
     now_line++;  // jump to the next line
     if(lt() == END)
@@ -250,15 +269,15 @@ void Simulator::parse_file(const char *FILENAME) {
     std::ifstream risc_file(FILENAME, std::ios::in);
     char          tmp_str[Simulator::MAX_LINE_COL];
     char          line_str[Simulator::MAX_LINE_COL];  // instruction line
-    std::memset(tmp_str,0,sizeof(tmp_str));
-    std::memset(line_str,0,sizeof(tmp_str));
+    std::memset(tmp_str, 0, sizeof(tmp_str));
+    std::memset(line_str, 0, sizeof(tmp_str));
 
-    int           current_line = 0;  // current line index (0-index)
+    int current_line = 0;  // current line index (0-index)
     // parse the input file line by line
     while(risc_file.getline(tmp_str, sizeof(tmp_str))) {
         // setup an instruction line
         std::sscanf(tmp_str, "%[^\n/]", line_str);
-        parse(line_str, lines[current_line], current_line,0);
+        parse(line_str, lines[current_line], current_line, 0);
         // std::cout << line_str << std::endl;
         current_line++;
         if(current_line == MAX_INSTRUCTION) {
@@ -268,8 +287,8 @@ void Simulator::parse_file(const char *FILENAME) {
             // maybe: raise exception?
             break;
         }
-        std::memset(tmp_str,0,sizeof(tmp_str));
-        std::memset(line_str,0,sizeof(line_str));
+        std::memset(tmp_str, 0, sizeof(tmp_str));
+        std::memset(line_str, 0, sizeof(line_str));
     }
     // deal with the instuctions whose argument [line_id]
     // appeared before its declaration
@@ -291,11 +310,11 @@ void Simulator::parse(const char *script,
                       bool        unfounded) {
     // std::cerr << current_line << std::endl;
     char name[Simulator::MAX_LINE_COL] = "UNDEFINED";  // instruction name
-    Num  args[3];                                  // arguments
-    int  i        = 0;                             // index of `line`
-    int  line_len = strlen(script);                // length of `line`
+    Num  args[3];                                      // arguments
+    int  i        = 0;                                 // index of `line`
+    int  line_len = strlen(script);                    // length of `line`
 
-    std::cout << "  line: \"" <<  script << "\"" << std::endl;
+    std::cout << "  line: \"" << script << "\"" << std::endl;
 
     // receive instruction name
     if(line_len) {  // not blank line
@@ -318,15 +337,21 @@ void Simulator::parse(const char *script,
         }
         name[i] = '\0';
     }
-    // std::cout << "Line Symbol:\"" << current_line << " " << name << "\"" << std::endl;
-    // std::cout << "scr: \"" << script << "\"" << std::endl;
-    // if `line_len` == 0, which means `script` is a blank line,
-    // `name` would stay as its default value "UNDEF"
-    // receive arguments and setup a new `Line`
+    // std::cout << "Line Symbol:\"" << current_line << " " << name << "\"" <<
+    // std::endl; std::cout << "scr: \"" << script << "\"" << std::endl; if
+    // `line_len` == 0, which means `script` is a blank line, `name` would stay
+    // as its default value "UNDEF" receive arguments and setup a new `Line`
     int   s       = i;
     short type_id = TYPE.count(name) ? TYPE[name] : 0;
     // clang-format off
     switch(type_id) {
+        // read/write [rd] 屏幕读写
+        // 只写最后一个字节，但会全部覆盖
+        // 只输出最低的字节
+        case READ: case WRITE:
+            s += add_arg(script+s, args[0], 0);
+            line = Line(type_id, args, 1);
+            break;
         // push/pop [r]
         case PUSH: case POP:
             s += add_arg(script + s, args[0], 0);
@@ -352,7 +377,7 @@ void Simulator::parse(const char *script,
                 line = Line(type_id, args, 1);
             }
             else {
-                if(unfounded) throw std::runtime_error("missing symbols:");
+                if(unfounded) throw std::runtime_error("parsing error: missing symbols:  ");
                 add_unfound;
             }
             break;
@@ -365,7 +390,7 @@ void Simulator::parse(const char *script,
                 line = Line(type_id, args, 3);
             }
             else {
-                if(unfounded) throw std::runtime_error("missing symbols:  ");
+                if(unfounded) throw std::runtime_error("parsing error: missing symbols:  ");
                 add_unfound;
             }
             break;
@@ -373,7 +398,9 @@ void Simulator::parse(const char *script,
         case RET: case END: case DRAW: case LINE_SYMBOL: case UNDEF:  
             line = Line(type_id, args, 0);
             break;
-        default: break;
+        default: 
+            throw std::runtime_error("parsing error: missing operation!");        
+            break;
     }
     // clang-format on
     return;
