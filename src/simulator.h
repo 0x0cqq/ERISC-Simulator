@@ -31,9 +31,11 @@ class Simulator {
     Simulator(/* args */);
     ~Simulator();
     void reset();
+    // debug functions
     void set_debug_mode(int m);
     void print_debug_note();
     void debug_watch();
+    // real functions
     void parse_file(const char *FILENAME);
     void execute(const char *OUTPUT_PATH, unsigned int stop_line = -1);
 };

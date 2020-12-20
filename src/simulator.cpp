@@ -1,13 +1,12 @@
 #include "simulator.h"
 #include <cstring>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
-#include <unordered_map>
 #include <sstream>
 #include <string>
-#include <ctime>
-#include <iomanip>
-// #include <unistd.h>
+#include <unordered_map>
 
 // clang-format off
 // some define to make code more elegant
@@ -22,6 +21,7 @@
 #define lt line.get_type
 // clang-format on
 
+// reset the type
 void Simulator::reset() {
     debug_mode    = 0;
     unfound_index = 0;
@@ -91,6 +91,7 @@ inline int get_arg(const char *args_str, char *arg) {
     return i + 1;
 }
 
+// print a line in a beautiful syntax
 void print_line(Line &line) {
     std::cout << "    type:" << line.get_type() << " arg:";
     // usleep(10000);
@@ -111,9 +112,9 @@ inline int strtoi(const char *s) {
     return num;
 }
 
+// type = 0 --> reg/imm; type = 1 --> lid
+// modify args[i];
 inline int add_arg(const char *args_str, Num &arg, int type) {
-    // type = 0 --> reg/imm; type = 1 --> lid
-    // modify args[i];
     int  ans = 0;
     char r[101];
     ans = get_arg(args_str, r);
@@ -131,7 +132,7 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
         arg = Num{true, jump_line.count(r) ? jump_line[r] : -1};
     }
     else {
-        std::cerr << "fuck" << std::endl;
+        std::cerr << "?" << std::endl;
     }
     return ans;
 }
@@ -144,21 +145,21 @@ void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
     static int cnt = -1;
     if(cnt == -1)
         cnt = 0;
-    static clock_t total_runtime = 0,last_clock = 0,t1 = 0;
+    static clock_t total_runtime = 0, last_clock = 0, t1 = 0;
     last_clock = clock();
     while(true) {
         if(cnt % (debug_mode ? 100 : 1000000) == 0)
             std::cout << "Current executed Lines: " << cnt << std::endl;
-        if(now_line == lines_num) {
+        if(now_line == lines_num) { // last line
             break;
         }
         int end_flag = do_line(now_line, lines[now_line], OUTPUT_PATH);
-        if(debug_mode && breakpoints.count(now_line)) {
+        if(debug_mode && breakpoints.count(now_line)) { // meet a breakpoint
             t1 = clock();
             total_runtime += t1 - last_clock;
             last_clock = t1;
             debug_watch();
-            last_clock = clock();
+            last_clock = clock(); // exclude these time 
         }
         cnt++;
         if(end_flag != 0) {
@@ -169,7 +170,8 @@ void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
     total_runtime += t1 - last_clock;
     last_clock = t1;
     std::cout << "--Total executed Lines: " << cnt << " --" << std::endl;
-    std::cout << "--Total runtime: " << std::setprecision(6) << double(total_runtime)/CLOCKS_PER_SEC <<  "s.--" << std::endl;
+    std::cout << "--Total runtime: " << std::setprecision(6)
+              << double(total_runtime) / CLOCKS_PER_SEC << "s.--" << std::endl;
 }
 
 // Do a line, in "now_line", with Line Struction "line"
@@ -183,6 +185,7 @@ int Simulator::do_line(unsigned int &now_line,
     }
     // test part
     if(debug_mode) {
+        std::cout << "  Current line: " << now_line;
         print_line(line);
     }
     // sort the lines to different types
@@ -272,10 +275,11 @@ int Simulator::do_line(unsigned int &now_line,
         default: break;
     }
     // clang-format on
-    if(debug_mode >= 2) { // 2
-        static int cnt         = 0;
+    if(debug_mode >= 2) {  // 2
+        static int  cnt = 0;
         static char tmpfilename[1024];
-        std::sprintf(tmpfilename, "%d.txt", cnt); // to be done: move it to output_path
+        std::sprintf(tmpfilename, "%d.txt",
+                     cnt);  // to be done: move it to output_path
         status.print_raw(tmpfilename);
         cnt++;
     }
@@ -283,7 +287,7 @@ int Simulator::do_line(unsigned int &now_line,
     if(lt() == END)
         return -1;  // set an end signal
     else
-        return 0; // next line!
+        return 0;  // next line!
 }
 
 // parse input file `FILENAME`(.risc)
@@ -291,16 +295,18 @@ int Simulator::do_line(unsigned int &now_line,
 void Simulator::parse_file(const char *FILENAME) {
     // index of `UNFOUND_LINE` and `UNFOUND_LINE_ID`
     std::ifstream risc_file(FILENAME, std::ios::in);
-    static char          line_str[Simulator::MAX_LINE_COL];  // instruction line
+    static char   line_str[Simulator::MAX_LINE_COL];  // instruction line
     std::cout << "---Parsing result:---" << std::endl;
     int current_line = 0;  // current line index (0-index)
     // parse the input file line by line
     while(risc_file.getline(line_str, sizeof(line_str))) {
         // setup an instruction line
         // std::sscanf(tmp_str, "%[^\n/]", line_str);
-        for(int i = 0;;i++) if(line_str[i] == 0 || line_str[i] == '/' || line_str[i] == '\n'){
-            line_str[i] = 0;break;
-        }
+        for(int i = 0;; i++)
+            if(line_str[i] == 0 || line_str[i] == '/' || line_str[i] == '\n') {
+                line_str[i] = 0;
+                break;
+            }
         parse(line_str, lines[current_line], current_line, 0);
         // std::cout << line_str << std::endl;
         current_line++;
@@ -330,12 +336,11 @@ void Simulator::parse(const char *script,
                       Line &      line,
                       int         current_line,
                       bool        unfounded) {
-    // std::cerr << current_line << std::endl;
     static char name[Simulator::MAX_LINE_COL];  // instruction name
-    std::sprintf(name,"UNDEFINED");
-    Num  args[3];                                      // arguments
-    int  i        = 0;                                 // index of `line`
-    int  line_len = strlen(script);                    // length of `line`
+    std::sprintf(name, "UNDEFINED");
+    Num args[3];                    // arguments
+    int i        = 0;               // index of `line`
+    int line_len = strlen(script);  // length of `line`
 
     std::cout << "  line: \"" << script << "\"" << std::endl;
 
@@ -349,7 +354,6 @@ void Simulator::parse(const char *script,
             }
             if(script[i] == ':') {  // is line_ID
                 name[i] = '\0';
-                // std::cout << "name: \"" << name << "\"" << std::endl;
                 if(jump_line.count(name)) {
                     throw std::runtime_error("duplicate symbols:  ");
                     return;
@@ -361,8 +365,6 @@ void Simulator::parse(const char *script,
         }
         name[i] = '\0';
     }
-    // std::cout << "Line Symbol:\"" << current_line << " " << name << "\"" <<
-    // std::endl; std::cout << "scr: \"" << script << "\"" << std::endl; if
     // `line_len` == 0, which means `script` is a blank line, `name` would stay
     // as its default value "UNDEF" receive arguments and setup a new `Line`
     int   s       = i;
@@ -442,6 +444,7 @@ void Simulator::print_debug_note() {
 #define print_error                                                            \
     std::cout << "Please try again, or type `?` for help." << std::endl
 
+// debug mode, watch varibles at breakpoints.
 void Simulator::debug_watch() {
     std::cout << "Program stops at line " << now_line << "." << std::endl;
     while(true) {
@@ -463,7 +466,7 @@ void Simulator::debug_watch() {
             std::cout << "----------END HELP----------" << std::endl;
             // clang-format on
         }
-        else if(op[0] == 'a' && op[1] == 'd' && op[2] == 'd') {
+        else if(op[0] == 'a' && op[1] == 'd' && op[2] == 'd') {  // add [x]
             std::istringstream is_op(op);
             std::string        tmp;
             unsigned int       pos;
@@ -471,7 +474,7 @@ void Simulator::debug_watch() {
             breakpoints.insert(pos);
             std::cout << "Added breakpoint at line " << pos << "." << std::endl;
         }
-        else if(op[0] == 'd' && op[1] == 'e' && op[2] == 'l') {
+        else if(op[0] == 'd' && op[1] == 'e' && op[2] == 'l') {  // del[x]
             std::istringstream is_op(op);
             std::string        tmp;
             unsigned int       pos;
@@ -483,11 +486,11 @@ void Simulator::debug_watch() {
             }
             else {
                 breakpoints.erase(pos);
-                std::cout << "Added breakpoint at line " << pos << "."
+                std::cout << "Deleted breakpoint at line " << pos << "."
                           << std::endl;
             }
         }
-        else if(op[0] == 's' && op[1] == 't' && op[2] == 'a') {
+        else if(op[0] == 's' && op[1] == 't' && op[2] == 'a') {  // stack [123]
             std::istringstream is_op(op);
             std::string        tmp;
             unsigned int       pos;
@@ -506,7 +509,10 @@ void Simulator::debug_watch() {
                 print_error;
             }
         }
-        else if(op[0] >= 'a' && op[0] <= 'z') {  // register
+        else if(op[0] == 'd' && op[1] == 'i' && op[2] == 's') {  // disable
+            debug_mode = 0;
+        }
+        else if(op[0] >= 'a' && op[0] <= 'z') {  // [register_name]
             if(REGISTER.count(op) == 0) {        // name not found
                 std::cout << "ERROR: no register is named \"" << op << "\". ";
                 print_error;
@@ -532,7 +538,7 @@ void Simulator::debug_watch() {
             if(status.print_memory(a, b) == -1)
                 std::cout << "ERROR: overflow.", print_error;
         }
-        else {
+        else {  // what the fuck?
             std::cout << "Didn't understand. " << std::endl;
             print_error;
         }

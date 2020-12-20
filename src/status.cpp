@@ -64,7 +64,7 @@ int Status::print_stack(unsigned int cnt) {
         return -1; // overflow
     }
     else {
-        std::cout << "--[top--->bottom]--";
+        std::cout << std::endl << "--[top--->bottom]--";
         print_bytes(stack, stack_ptr - stack, cnt);
         std::cout << std::endl;
         return 0;

@@ -18,12 +18,16 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 + 代码风格一致：组内使用 VSCode 的 Clang-format 插件统一代码风格。
 + 程序结构清晰：我们先进行了总体框架的搭建，随后才进行具体代码工作。
 + 开发记录完整：我们使用 GitHub 管理代码，所有代码历史公开可查 ([ERISC-Simulator](https://github.com/ChenQiqian/ERISC-Simulator)) 。
-+ 程序实现精巧：虽然有大量注释以及头文件，但本项目总体代码仅有约 1000 行。
++ 程序实现精巧：虽然有大量注释以及头文件，但本项目总体代码仅有约 1200 行。
   + 寄存器和立即数的处理：采用一个结构体同一了两者。
   + 巧用宏定义减少代码量：定义了 `_val` 、`_ref` 等宏定义，满足引用传参的要求。
 + 程序稳健性强：对于 `line_symbol` 、操作的操作数等易错的地方，进行了合法性检查并抛出异常。
 
 ## 小组人员及分工
+
+合影：
+
+![]()
 
 | 姓名   | 班级   | 学号 | 分工                                                         |
 | ------ | ------ | ---- | ------------------------------------------------------------ |
@@ -124,7 +128,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 必做任务3：成功编写并运行。代码输出结果见 `./sample_output/test_3` 。
 
-必做任务4：成功编写 $O(n \log n)$ 的素数筛并运行，共计运行约 29336423 行命令得到最后的答案。代码见 `./input/test_4.risc` ，输出结果见 `./sample_output/test_4` 。
+必做任务4：成功编写 $O(n \log n)$ 的素数筛并运行，共计运行约 29336424 行命令，用时约 2.72536s（Dual-Core Intel Core M, 1.1GHz）得到最后的答案。代码见 `./input/test_4.risc` ，输出结果见 `./sample_output/test_4` 。
 
 ### 选做任务
 
@@ -196,7 +200,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### 如何设置断点
 
-在某行最后放置一个 `*` 字符，后面直接连接  `\n` 或 `/ ...`。（注意，断点只有在 `debug` 模式下才能生效）
+在某行最后放置一个 `*` 字符，后面**直接**连接  `\n` 或 `/ ...`。（注意，断点只有在 `debug` 模式下才能生效）
 
 #### 如何在断点处做一些事情
 
@@ -211,6 +215,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 | 查看栈 | `stack 1`/`stack 123` | 第一个参数必须是 `stack` <br/>第二个参数是要查看的元素个数 |
 | 增加断点 | `add x` | 在第 $x$ 行处增加一个断点（注意是以 0 为开始行） |
 | 去除断点 | `del x` | 在第 $x$ 行处去掉断点（注意是以 0 为开始行） |
+| 结束调试 | `disable` | 关闭 `debug` 模式，结束这次断点后将不会再进入任何断点。 |
 
 ### 其他注意事项
 
@@ -239,9 +244,37 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### “计算机的状态”：Status 类
 
-Status 类主要用来表示计算机的状态，包括寄存器，内存、栈的数值和使用情况。
+`Status` 类主要用来表示计算机的状态，包括寄存器，内存、栈的数值和使用情况。
 
  `Status` 类中包含数组 `unsigned int x[REGISTER_NUM]; unsigned char    memory[MEMORY_SIZE]; unsigned char stack[STACK_SIZE];`，分别用来表示寄存器、内存、栈的存储情况；包含结构 `Output_status` ，用来记录寄存器、内存、栈的使用情况。
 
  `Status` 类中包含 `void load(unsigned int &rd, unsigned int ptr)` 等方法来执行“命令”，其中需要修改的寄存器传参时使用引用，只需要值的寄存器传参时使用值；为此定义了 `unsigned int  get_reg_val(unsigned short pos);unsigned int &get_reg_ref(unsigned short pos);` 方法来获取寄存器的值和引用；还包含一系列修改 `output_status` 的方法，在执行命令时同步运行；还包含一系列输出函数，将寄存器、内存、栈的内容输出。
 
+### 程序模拟运行
+
+#### 封装：Simulator 类
+
+`Simulator` 类主要用来模拟程序运行。程序运行主要分为两个阶段： `parse` 阶段中，将
+
+#### 解释：parse 阶段
+
+主要由两个函数组成：
+
++ `void parse_file(const char *FILENAME)` ，进行总体的解释，调用下面的函数。
+  + 这里最难的是处理 `line_symbol` 在其调用之后出现的问题。我们采用建一个数组 `unfounded_line` 来储存这样的调用行，在所有行均处理完之后再对这些行进行处理
++ `void parse(const char *script, Line & line, const int current_line, bool unfounded)`，进行每一行具体的解释，存储到 `line` 变量中。
+  + 其中使用 `unordered_map` 来解析名称，通过 `get_arg, add_arg` 函数来从文本中读取并添加参数至 `Line` 中。
+
+#### 运行：execute 阶段
+
+主要由两个函数组成：
+
++ `void execute(const char *OUTPUT_PATH, unsigned int stop_line = -1)` 整体运行程序，调用下面的 `do_line` 函数。
++ `int do_line(unsigned int &now_line, Line line, const char *output_path)` ，运行具体的某一行，并修改 `now_line` 。
+
+#### 调试：debug 模式
+
+`Simulator` 结构体内有 `debug_mode` 变量，代表调试等级，默认为 0 ，开启 `debug` 模式后为 1。
+主要在 `void debug_watch();` 模式中进行。
+
+用户输入的命令经过条件判断后得到反馈。
