@@ -15,6 +15,27 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "type": "shell",
+            "label": "Build test",
+            "command": "g++-10",
+            "args": [
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-c"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            // "problemMatcher": [
+            //     "$clang"
+            // ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ],
     "version": "2.0.0"
