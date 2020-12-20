@@ -1,14 +1,16 @@
 #ifndef __PROGRAM_H_
 #define __PROGRAM_H_
 
+// multi-usage "number"
 class Num {
   public:
-    bool type;
+    // type:
     // `true` means immediate number or line_to_jump (line to exec)
     // `false` means register
-    //   (depend on the instruction)
+    // (depend on the instruction)
+    bool type;
+    // if `val` means register, 0 to 31 stands for x0 to x31
     unsigned int val;
-    // if `val` means register, we will use 0 to 31 to represent it
     Num();
     Num(bool _type, unsigned int _val);
     ~Num();
@@ -42,8 +44,10 @@ class Line {
 #define RET         42
 #define READ        51
 #define WRITE       52
+    // the meaning is above
     short type;
-    Num   arg[3];
+    // 3 (or less) args
+    Num arg[3];
 
   public:
     Line();

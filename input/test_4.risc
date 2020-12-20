@@ -22,7 +22,7 @@ blt s1,a6,loopp
 
 draw
 mov s1,a2
-loopa:// 循环变量放在 s1
+loopa: // 循环变量放在 s1
 call getval
 beq t2,x0,innerend
 add s2,s1,s1

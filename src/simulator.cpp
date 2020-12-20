@@ -2,7 +2,11 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <map>
+#include <unordered_map>
+#include <sstream>
+#include <string>
+#include <ctime>
+#include <iomanip>
 // #include <unistd.h>
 
 // clang-format off
@@ -32,6 +36,7 @@ void Simulator::reset() {
         lines[i].reset();
     }
     status.reset();
+    breakpoints.clear();
 }
 
 Simulator::Simulator(/* args */) {
@@ -44,7 +49,7 @@ void Simulator::set_debug_mode(int x) {
     debug_mode = x;
 }
 
-std::map<std::string, int> REGISTER = {
+std::unordered_map<std::string, int> REGISTER = {
     {"x0", 0},   {"zero", 0}, {"x1", 1},   {"ra", 1},  {"x2", 2},   {"sp", 2},
     {"x3", 3},   {"gp", 3},   {"x4", 4},   {"tp", 4},  {"x5", 5},   {"t0", 5},
     {"x6", 6},   {"t1", 6},   {"x7", 7},   {"t2", 7},  {"x8", 8},   {"fp", 8},
@@ -57,7 +62,7 @@ std::map<std::string, int> REGISTER = {
     {"x27", 27}, {"s11", 27}, {"x28", 28}, {"t3", 28}, {"x29", 29}, {"t4", 29},
     {"x30", 30}, {"t5", 30},  {"x31", 31}, {"t6", 31}};
 
-std::map<std::string, short> TYPE = {
+std::unordered_map<std::string, short> TYPE = {
     {"UNDEFINED", UNDEF}, {"end", END},   {"draw", DRAW}, {"load", LOAD},
     {"store", STORE},     {"push", PUSH}, {"pop", POP},   {"mov", MOV},
     {"add", ADD},         {"sub", SUB},   {"mul", MUL},   {"div", DIV},
@@ -66,7 +71,7 @@ std::map<std::string, short> TYPE = {
     {"call", CALL},       {"ret", RET},   {"read", READ}, {"write", WRITE}};
 
 // a hash map from the name of line_id to its line number
-std::map<std::string, unsigned int> jump_line;
+std::unordered_map<std::string, unsigned int> jump_line;
 
 // get the next argument in the string `args_str` and store it in `arg`
 // the next arg appears at `args_str + get_arg()` (if there is one)
@@ -76,13 +81,26 @@ inline int get_arg(const char *args_str, char *arg) {
     int i     = 0;  // index of `arg_str`
     int index = 0;  // index of `arg`
     while(i < len &&
-          (args_str[i] == ' ' || args_str[i] == ',' || args_str[i] == '\n'))
+          (args_str[i] == ' ' || args_str[i] == ',' || args_str[i] == '\n' ||
+           args_str[i] == '*'))
         ++i;
     while(i < len && args_str[i] != ' ' && args_str[i] != ',' &&
-          args_str[i] != '\n')
+          args_str[i] != '\n' && args_str[i] != '*')
         arg[index++] = args_str[i++];
     arg[index] = '\0';
     return i + 1;
+}
+
+void print_line(Line &line) {
+    std::cout << "    type:" << line.get_type() << " arg:";
+    // usleep(10000);
+    for(int i = 0; i < 3; i++) {
+        std::cout << "(" << int(line.get_arg(i).type) << ","
+                  << int(line.get_arg(i).val) << ")";
+        if(i < 2)
+            std::cout << ",";
+    }
+    std::cout << std::endl;
 }
 
 // convert a string into a number (hex or dec)
@@ -102,6 +120,9 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
     // std::cout << "arg: \"";
     // std::cout << args_str << "\"" << std::endl;
     if(type == 0) {
+        if('a' <= r[0] && r[0] <= 'z' && !REGISTER.count(r)) {
+            throw std::runtime_error("parsing error: wrong register name.");
+        }
         arg = (('a' <= r[0] && r[0] <= 'z') ?
                    Num{false, (unsigned int)REGISTER[r]} :
                    Num{true, (unsigned int)strtoi(r)});
@@ -118,23 +139,37 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
 // Execute the program from now_line, and ended to stop_line(not execute)
 // (-1 means to the `end` symbol)
 void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
+    if(debug_mode)
+        print_debug_note();
     static int cnt = -1;
     if(cnt == -1)
         cnt = 0;
+    static clock_t total_runtime = 0,last_clock = 0,t1 = 0;
+    last_clock = clock();
     while(true) {
-        if(cnt % 1000000 == 0)
+        if(cnt % (debug_mode ? 100 : 1000000) == 0)
             std::cout << "Current executed Lines: " << cnt << std::endl;
-        if(now_line == stop_line || now_line == lines_num)
+        if(now_line == lines_num) {
             break;
+        }
         int end_flag = do_line(now_line, lines[now_line], OUTPUT_PATH);
+        if(debug_mode && breakpoints.count(now_line)) {
+            t1 = clock();
+            total_runtime += t1 - last_clock;
+            last_clock = t1;
+            debug_watch();
+            last_clock = clock();
+        }
+        cnt++;
         if(end_flag != 0) {
             break;
         }
-        else {
-            cnt++;
-        }
     }
+    t1 = clock();
+    total_runtime += t1 - last_clock;
+    last_clock = t1;
     std::cout << "--Total executed Lines: " << cnt << " --" << std::endl;
+    std::cout << "--Total runtime: " << std::setprecision(6) << double(total_runtime)/CLOCKS_PER_SEC <<  "s.--" << std::endl;
 }
 
 // Do a line, in "now_line", with Line Struction "line"
@@ -148,19 +183,10 @@ int Simulator::do_line(unsigned int &now_line,
     }
     // test part
     if(debug_mode) {
-        std::cout << "now_line:" << now_line << std::endl;
-        std::cout << "  type:" << line.get_type() << " arg:";
-        // usleep(10000);
-        for(int i = 0; i < 3; i++) {
-            std::cout << "(" << int(_arg[i].type) << "," << int(_arg[i].val)
-                      << ")";
-            if(i < 2)
-                std::cout << ",";
-        }
-        std::cout << std::endl;
+        print_line(line);
     }
     // sort the lines to different types
-    char *filename = new char[1024];
+    static char filename[1024];
     // clang-format off
     switch(lt()) {
         case UNDEF:case LINE_SYMBOL: 
@@ -246,40 +272,35 @@ int Simulator::do_line(unsigned int &now_line,
         default: break;
     }
     // clang-format on
-    delete[] filename;
-    // test part2
-    if(debug_mode >= 2) {
+    if(debug_mode >= 2) { // 2
         static int cnt         = 0;
-        char *     tmpfilename = new char[1024];
-        std::sprintf(tmpfilename, "%d.txt", cnt);
-        status.print_to_txt(tmpfilename);
+        static char tmpfilename[1024];
+        std::sprintf(tmpfilename, "%d.txt", cnt); // to be done: move it to output_path
+        status.print_raw(tmpfilename);
         cnt++;
-        delete[] tmpfilename;
     }
-    // end test part 2
     now_line++;  // jump to the next line
     if(lt() == END)
         return -1;  // set an end signal
     else
-        return 0;
+        return 0; // next line!
 }
 
 // parse input file `FILENAME`(.risc)
 // and store the instuctions in `Simulator.lines`
 void Simulator::parse_file(const char *FILENAME) {
     // index of `UNFOUND_LINE` and `UNFOUND_LINE_ID`
-
     std::ifstream risc_file(FILENAME, std::ios::in);
-    char          tmp_str[Simulator::MAX_LINE_COL];
-    char          line_str[Simulator::MAX_LINE_COL];  // instruction line
-    std::memset(tmp_str, 0, sizeof(tmp_str));
-    std::memset(line_str, 0, sizeof(tmp_str));
-
+    static char          line_str[Simulator::MAX_LINE_COL];  // instruction line
+    std::cout << "---Parsing result:---" << std::endl;
     int current_line = 0;  // current line index (0-index)
     // parse the input file line by line
-    while(risc_file.getline(tmp_str, sizeof(tmp_str))) {
+    while(risc_file.getline(line_str, sizeof(line_str))) {
         // setup an instruction line
-        std::sscanf(tmp_str, "%[^\n/]", line_str);
+        // std::sscanf(tmp_str, "%[^\n/]", line_str);
+        for(int i = 0;;i++) if(line_str[i] == 0 || line_str[i] == '/' || line_str[i] == '\n'){
+            line_str[i] = 0;break;
+        }
         parse(line_str, lines[current_line], current_line, 0);
         // std::cout << line_str << std::endl;
         current_line++;
@@ -290,8 +311,6 @@ void Simulator::parse_file(const char *FILENAME) {
             // maybe: raise exception?
             break;
         }
-        std::memset(tmp_str, 0, sizeof(tmp_str));
-        std::memset(line_str, 0, sizeof(line_str));
     }
     // deal with the instuctions whose argument [line_id]
     // appeared before its declaration
@@ -302,7 +321,7 @@ void Simulator::parse_file(const char *FILENAME) {
     // record line_num into the simulator, to end the execute
     lines_num = current_line;
     risc_file.close();
-    std::cout << "Finish parsing." << std::endl;
+    std::cout << "---Finish parsing.---" << std::endl;
     return;
 }
 
@@ -312,7 +331,8 @@ void Simulator::parse(const char *script,
                       int         current_line,
                       bool        unfounded) {
     // std::cerr << current_line << std::endl;
-    char name[Simulator::MAX_LINE_COL] = "UNDEFINED";  // instruction name
+    static char name[Simulator::MAX_LINE_COL];  // instruction name
+    std::sprintf(name,"UNDEFINED");
     Num  args[3];                                      // arguments
     int  i        = 0;                                 // index of `line`
     int  line_len = strlen(script);                    // length of `line`
@@ -320,6 +340,7 @@ void Simulator::parse(const char *script,
     std::cout << "  line: \"" << script << "\"" << std::endl;
 
     // receive instruction name
+
     if(line_len) {  // not blank line
         for(; i < line_len; ++i) {
             if(script[i] == ' ') {  // instrction name end
@@ -382,6 +403,7 @@ void Simulator::parse(const char *script,
             else {
                 if(unfounded) throw std::runtime_error("parsing error: missing symbols:  ");
                 add_unfound;
+                return;
             }
             break;
         // beq/bne/blt/bge [rs1],[rs2],[line_id]
@@ -395,6 +417,7 @@ void Simulator::parse(const char *script,
             else {
                 if(unfounded) throw std::runtime_error("parsing error: missing symbols:  ");
                 add_unfound;
+                return;
             }
             break;
         // ret/end/draw/line_symbol/undef
@@ -402,9 +425,116 @@ void Simulator::parse(const char *script,
             line = Line(type_id, args, 0);
             break;
         default: 
-            throw std::runtime_error("parsing error: missing operation!");        
+            throw std::runtime_error("parsing error: no this operation!");        
             break;
     }
+    if(script[line_len-1] == '*'){
+        breakpoints.insert(current_line);
+    }
+    print_line(line);
     // clang-format on
     return;
+}
+
+void Simulator::print_debug_note() {
+    std::cout << "Debug Mode on." << std::endl;
+}
+#define print_error                                                            \
+    std::cout << "Please try again, or type `?` for help." << std::endl
+
+void Simulator::debug_watch() {
+    std::cout << "Program stops at line " << now_line << "." << std::endl;
+    while(true) {
+        // clang-format off
+        std::cout << "***Give a command: (`?` for help or `!` to quit), press enter to submit: ";
+        // clang-format on
+        static char op[MAX_LINE_COL];  // string to store operation
+        std::cin.getline(op, sizeof(op));
+        if(op[0] == '!') {  // quit
+            break;
+        }
+        else if(op[0] == '?') {  // help
+            // clang-format off
+            std::cout << "---------BEGIN HELP---------" << std::endl;
+            std::cout << "0. To add or delete a breakpoint: `add 3`/`del 33`" << std::endl;
+            std::cout << "1. To get the value of a register: `a1`/`fp`/`zero`/`x31`" << std::endl;
+            std::cout << "2. To get some bytes start from a memory address: `0x3f 123`/`100000 1`" << std::endl;
+            std::cout << "3. To get top bytes of the stack: `stack 1`/`stack 13`" << std::endl;
+            std::cout << "----------END HELP----------" << std::endl;
+            // clang-format on
+        }
+        else if(op[0] == 'a' && op[1] == 'd' && op[2] == 'd') {
+            std::istringstream is_op(op);
+            std::string        tmp;
+            unsigned int       pos;
+            is_op >> tmp >> pos;
+            breakpoints.insert(pos);
+            std::cout << "Added breakpoint at line " << pos << "." << std::endl;
+        }
+        else if(op[0] == 'd' && op[1] == 'e' && op[2] == 'l') {
+            std::istringstream is_op(op);
+            std::string        tmp;
+            unsigned int       pos;
+            is_op >> tmp >> pos;
+            if(!breakpoints.count(pos)) {
+                std::cout << "ERROR: Breakpoint not found at line " << pos
+                          << ". ";
+                print_error;
+            }
+            else {
+                breakpoints.erase(pos);
+                std::cout << "Added breakpoint at line " << pos << "."
+                          << std::endl;
+            }
+        }
+        else if(op[0] == 's' && op[1] == 't' && op[2] == 'a') {
+            std::istringstream is_op(op);
+            std::string        tmp;
+            unsigned int       pos;
+            is_op >> tmp;
+            tmp.resize(0);
+            is_op >> tmp;
+            if(tmp[0] != 0) {
+                is_op = std::istringstream(tmp);
+                is_op >> pos;
+                if(status.print_stack(pos) == -1)
+                    std::cout << "ERROR: overflow.", print_error;
+            }
+            else {
+                std::cout
+                    << "ERROR: Stack operations must be followed by numbers.";
+                print_error;
+            }
+        }
+        else if(op[0] >= 'a' && op[0] <= 'z') {  // register
+            if(REGISTER.count(op) == 0) {        // name not found
+                std::cout << "ERROR: no register is named \"" << op << "\". ";
+                print_error;
+            }
+            else {
+                std::cout << "The value of register \"" << op << "\" is \""
+                          << status.get_reg_val(REGISTER[op]) << "\"."
+                          << std::endl;
+            }
+        }
+        else if(op[0] >= '0' && op[0] <= '9') {  // memory
+            std::istringstream is_op(op);
+            unsigned int       a = -1, b = 1;
+            // is_op >> a;
+            if(op[1] == 'x') {
+                is_op >> std::hex >> a;
+                is_op >> std::dec >> b;
+            }
+            else {
+                is_op >> std::dec >> a;
+                is_op >> std::dec >> a;
+            }
+            if(status.print_memory(a, b) == -1)
+                std::cout << "ERROR: overflow.", print_error;
+        }
+        else {
+            std::cout << "Didn't understand. " << std::endl;
+            print_error;
+        }
+    }
 }

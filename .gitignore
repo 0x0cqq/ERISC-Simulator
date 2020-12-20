@@ -1,7 +1,5 @@
 *
 !*.*
-*.bmp
-*.txt
-*.o
 .DS_Store
 */.DS_Store
+*.txt

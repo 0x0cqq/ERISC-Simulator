@@ -4,7 +4,7 @@ mov x7,x0
 mov x8,0x32
 loop:
 add x7,x7,x6
-add x5,x5,x7
+add x5,x5,x7 *
 blt x7,x8,loop
 mov a0,x5
 draw

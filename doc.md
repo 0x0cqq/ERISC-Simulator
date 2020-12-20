@@ -19,8 +19,8 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 + 程序结构清晰：我们先进行了总体框架的搭建，随后才进行具体代码工作。
 + 开发记录完整：我们使用 GitHub 管理代码，所有代码历史公开可查 ([ERISC-Simulator](https://github.com/ChenQiqian/ERISC-Simulator)) 。
 + 程序实现精巧：虽然有大量注释以及头文件，但本项目总体代码仅有约 1000 行。
-  + 寄存器和立即数的处理：
-  + 巧用宏定义减少代码量：
+  + 寄存器和立即数的处理：采用一个结构体同一了两者。
+  + 巧用宏定义减少代码量：定义了 `_val` 、`_ref` 等宏定义，满足引用传参的要求。
 + 程序稳健性强：对于 `line_symbol` 、操作的操作数等易错的地方，进行了合法性检查并抛出异常。
 
 ## 小组人员及分工
@@ -32,7 +32,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 | 武文静 | 计05   |  \*\*\*\*\*\*\*\*\*\*    | `output_bmp` 的相关函数、`status` 类的函数                   |
 | 梅雨   | 计06   |  \*\*\*\*\*\*\*\*\*\*    | `output_bmp` 的相关函数、`status` 类的函数                   |
 
-## 程序架构
+## 程序整体架构
 
 本程序采用面向对象的方法编程，`src` 目录文件组织如下：
 
@@ -116,7 +116,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 完成。见对应输入文件的 `result.txt` 。
 
-#### 必做任务完成情况
+#### 必做程序编写情况
 
 必做任务1：成功运行，输出结果见 `./sample_output/test_1` 。
 
@@ -128,7 +128,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 ### 选做任务
 
-#### 命令增加
+#### 读写（io）命令增加
 
 加入屏幕读写命令。
 
@@ -139,20 +139,21 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### 调试模式
 
-> 这汇编，也太难调了吧！（来自写了2个多小时汇编素数筛的同学）
+> 这汇编，也太难调了吧！（来自写了2个多小时汇编素数筛，最后发现寄存器名字敲错了的同学）
 
-于是，加入了 debug 模式。在 debug 模式中，程序输出更多信息，并且可以在运行过程中指定的一些行暂停程序，进行变量的查看。具体使用方法见下文。
+于是，加入了 `debug` 模式。在 `debug` 模式中，程序输出更多信息至屏幕，并且可以在运行过程中指定的一些行暂停程序，进行变量的查看。具体使用方法见下文。
 
 #### 空行、注释支持
 
-空行会被忽略。
+空行会被忽略，但计入行数。
 
 每一行中第一个 `/` 字符之后的所有字符均会被忽略，因此可以使用 `//some comments` 的类似 C++ 的方式来编写注释。调试和编码都因此方便多了！
 
-#### 简单的代码的合法性检查
+#### 简单的代码合法性检查
 
 1. 对未出现的行标识、重复出现的行标识符号进行了判断并抛出异常，防止出现一些不可预料的行为。
 2. 对未被定义的命令进行了判断并抛出异常，帮助编码者在自己拼错命令的时候快速 debug。
+3. 对可能出现的寄存器名称不存在的命令进行了判断并抛出异常，防止程序解析错了我们也不知道。
 
 ## 使用说明
 
@@ -195,14 +196,52 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### 如何设置断点
 
-#### 如何在断点处查看变量
+在某行最后放置一个 `*` 字符，后面直接连接  `\n` 或 `/ ...`。（注意，断点只有在 `debug` 模式下才能生效）
 
-#### 如何单步运行
+#### 如何在断点处做一些事情
 
-### 一些未定义行为的处理方法
+程序会在设置的断点处暂停，此时可以进行如下的操作：
+
+| 操作       | 命令                | 说明                 |
+| ---------- | ------------------- | -------------------- |
+| 查看帮助   | `?`                 | 无                   |
+| 继续运行   | `!`                 | 无                   |
+| 查看寄存器 | `fp`/`zero`/`x31`   | 直接输入寄存器名即可 |
+| 查看内存   | `0x3f 123`/`100000 1` | 第一个参数可以是16进制数，也可以是10进制数<br/>第二个参数代表字节数 |
+| 查看栈 | `stack 1`/`stack 123` | 第一个参数必须是 `stack` <br/>第二个参数是要查看的元素个数 |
+| 增加断点 | `add x` | 在第 $x$ 行处增加一个断点（注意是以 0 为开始行） |
+| 去除断点 | `del x` | 在第 $x$ 行处去掉断点（注意是以 0 为开始行） |
+
+### 其他注意事项
 
 1. 函数等定义应该放在最后，否则会出问题。
 2. ERISC 源代码最大 10000 行，如果超出将只阅读前 10000 行。
 3. ERISC 源代码只支持 ASCII码。
 4. ERISC 源代码每行不能超过 100个字符。
+
+## 具体实现解读
+
+### 数据管理
+
+#### “数”：Num 类
+
+`Num` 类主要用来表示每行命令中的参数。
+
+ `Num` 类中包含 `bool type` 和 `unsigned int val` 两个变量；如果 `type` 是 1 代表这就是 “数”，否则代表的是一个寄存器的编号。
+
+#### “行”：Line 类
+
+`Line` 类主要用来表示每行的命令及参数。
+
+ `Line` 类中包含 `short type` ，表示命令类型；包含 `Num args[3]` ，表示可能出现的三个参数。
+
+用宏定义的方法将命令类型映射到 `short`范围内的一个整数。
+
+#### “计算机的状态”：Status 类
+
+Status 类主要用来表示计算机的状态，包括寄存器，内存、栈的数值和使用情况。
+
+ `Status` 类中包含数组 `unsigned int x[REGISTER_NUM]; unsigned char    memory[MEMORY_SIZE]; unsigned char stack[STACK_SIZE];`，分别用来表示寄存器、内存、栈的存储情况；包含结构 `Output_status` ，用来记录寄存器、内存、栈的使用情况。
+
+ `Status` 类中包含 `void load(unsigned int &rd, unsigned int ptr)` 等方法来执行“命令”，其中需要修改的寄存器传参时使用引用，只需要值的寄存器传参时使用值；为此定义了 `unsigned int  get_reg_val(unsigned short pos);unsigned int &get_reg_ref(unsigned short pos);` 方法来获取寄存器的值和引用；还包含一系列修改 `output_status` 的方法，在执行命令时同步运行；还包含一系列输出函数，将寄存器、内存、栈的内容输出。
 

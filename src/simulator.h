@@ -3,6 +3,7 @@
 
 #include "program.h"
 #include "status.h"
+#include <unordered_set>
 
 class Simulator {
   private:
@@ -18,17 +19,21 @@ class Simulator {
     Status       status;
     unsigned int now_line;
     unsigned int lines_num;
-    void         parse(const char *script,
-                       Line &      line,
-                       const int   current_line,
-                       bool        unfounded);
-    int do_line(unsigned int &now_line, Line line, const char *output_path);
+
+    void parse(const char *script,
+               Line &      line,
+               const int   current_line,
+               bool        unfounded);
+    int  do_line(unsigned int &now_line, Line line, const char *output_path);
+    std::unordered_set<unsigned int> breakpoints;
 
   public:
     Simulator(/* args */);
     ~Simulator();
     void reset();
     void set_debug_mode(int m);
+    void print_debug_note();
+    void debug_watch();
     void parse_file(const char *FILENAME);
     void execute(const char *OUTPUT_PATH, unsigned int stop_line = -1);
 };

@@ -43,6 +43,8 @@ int main(int argc, char const *argv[]) {
                 a->execute(output_path);
             }
             else {
+                a->set_debug_mode(1);
+                a->execute(output_path);
             }
         }
         else if(type[0] == 't') {
