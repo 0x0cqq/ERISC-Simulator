@@ -122,7 +122,6 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
     // std::cout << args_str << "\"" << std::endl;
     if(type == 0) {
         if('a' <= r[0] && r[0] <= 'z' && !REGISTER.count(r)) {
-            printf("===rrrrr====\n%s %d\n", r, int(REGISTER.count(r)));
             throw std::runtime_error("parsing error: wrong register name.");
         }
         arg = (('a' <= r[0] && r[0] <= 'z') ?
