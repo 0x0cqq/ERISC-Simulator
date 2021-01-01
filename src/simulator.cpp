@@ -122,6 +122,7 @@ inline int add_arg(const char *args_str, Num &arg, int type) {
     // std::cout << args_str << "\"" << std::endl;
     if(type == 0) {
         if('a' <= r[0] && r[0] <= 'z' && !REGISTER.count(r)) {
+            printf("===rrrrr====\n%s %d\n", r, int(REGISTER.count(r)));
             throw std::runtime_error("parsing error: wrong register name.");
         }
         arg = (('a' <= r[0] && r[0] <= 'z') ?
@@ -303,7 +304,7 @@ void Simulator::parse_file(const char *FILENAME) {
         // setup an instruction line
         // std::sscanf(tmp_str, "%[^\n/]", line_str);
         for(int i = 0;; i++)
-            if(line_str[i] == 0 || line_str[i] == '/' || line_str[i] == '\n') {
+            if(line_str[i] == 0 || line_str[i] == '/' || line_str[i] == '\r' || line_str[i] == '\n') {
                 line_str[i] = 0;
                 break;
             }
