@@ -81,10 +81,10 @@ inline int get_arg(const char *args_str, char *arg) {
     int i     = 0;  // index of `arg_str`
     int index = 0;  // index of `arg`
     while(i < len &&
-          (args_str[i] == ' ' || args_str[i] == ',' || args_str[i] == '\n' ||
+          (args_str[i] == ' ' || args_str[i] == ',' || args_str[i] == '\n' || args_str[i] == '\r' || 
            args_str[i] == '*'))
         ++i;
-    while(i < len && args_str[i] != ' ' && args_str[i] != ',' &&
+    while(i < len && args_str[i] != ' ' && args_str[i] != ',' &&  args_str[i] != '\r' &&
           args_str[i] != '\n' && args_str[i] != '*')
         arg[index++] = args_str[i++];
     arg[index] = '\0';
@@ -153,7 +153,6 @@ void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
         if(now_line == lines_num) { // last line
             break;
         }
-        int end_flag = do_line(now_line, lines[now_line], OUTPUT_PATH);
         if(debug_mode && breakpoints.count(now_line)) { // meet a breakpoint
             t1 = clock();
             total_runtime += t1 - last_clock;
@@ -161,6 +160,7 @@ void Simulator::execute(const char *OUTPUT_PATH, unsigned int stop_line) {
             debug_watch();
             last_clock = clock(); // exclude these time 
         }
+        int end_flag = do_line(now_line, lines[now_line], OUTPUT_PATH);
         cnt++;
         if(end_flag != 0) {
             break;
