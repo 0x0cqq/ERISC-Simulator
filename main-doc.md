@@ -288,6 +288,7 @@ This is a C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer
 ## 一些不宜直接上传于 GitHub的信息
 
 pdf版文档：https://cloud.tsinghua.edu.cn/f/4531f974c4654bf296c2/?dl=1
+
 演示视频：https://cloud.tsinghua.edu.cn/f/43adc88c607e4762aa09/?dl=1
 
 失效后如需要，请索取。
