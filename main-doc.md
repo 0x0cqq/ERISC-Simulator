@@ -4,9 +4,9 @@
 
 ## 简介
 
-ERISC（Extremely Reduced Instruction Set Computer, 极度精简指令集）的 C++ 模拟器，是清华大学2020年秋季学期“程序设计基础(30240233-2)”课程的期末大作业。
+本程序是 ERISC（Extremely Reduced Instruction Set Computer, 极度精简指令集）的 C++ 模拟器，是清华大学2020年秋季学期“程序设计基础(30240233-2)”课程的期末大作业。
 
-A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which is the final project of the course "Fundamentals of Programming(30240233-2)" in Tsinghua University.
+This is a C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which is the final project of the course "Fundamentals of Programming(30240233-2)" in Tsinghua University.
 
 ## 亮点
 
@@ -16,18 +16,19 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 + 代码注释充分：绝大多数核心代码均有注释。
 + 代码风格一致：组内使用 VSCode 的 Clang-format 插件统一代码风格。
-+ 程序结构清晰：我们先进行了总体框架的搭建，随后才进行具体代码工作。
++ 程序结构清晰：我们先进行了总体框架的搭建，随后才进行具体代码工作。（具体可见开发日志）
 + 开发记录完整：我们使用 GitHub 管理代码，所有代码历史公开可查 ([ERISC-Simulator](https://github.com/ChenQiqian/ERISC-Simulator)) 。
-+ 程序实现精巧：虽然有大量注释以及头文件，但本项目总体代码仅有约 1200 行。
-  + 寄存器和立即数的处理：采用一个结构体同一了两者。
++ 程序实现精巧：虽然有大量注释、头文件、附加功能，但本项目总体代码仅有约 1200 行。
+  + 寄存器和立即数的处理：采用一个结构体同一了两者，简化了参数传递。
   + 巧用宏定义减少代码量：定义了 `_val` 、`_ref` 等宏定义，满足引用传参的要求。
 + 程序稳健性强：对于 `line_symbol` 、操作的操作数等易错的地方，进行了合法性检查并抛出异常。
++ 程序人性化好：输出了关键的过程信息，拥有调试模式（含帮助）助力汇编代码的编写与调试。
 
 ## 小组人员及分工
 
 合影：
 
-![]()
+![](photo.jpg)
 
 | 姓名   | 班级   | 学号 | 分工                                                         |
 | ------ | ------ | ---- | ------------------------------------------------------------ |
@@ -120,7 +121,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 完成。见对应输入文件的 `result.txt` 。
 
-#### 必做程序编写情况
+#### 必做程序编写、运行情况
 
 必做任务1：成功运行，输出结果见 `./sample_output/test_1` 。
 
@@ -143,7 +144,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### 调试模式
 
-> 这汇编，也太难调了吧！（来自写了2个多小时汇编素数筛，最后发现寄存器名字敲错了的同学）
+> 这汇编，也太难调了吧！（来自写了2个多小时汇编素数筛，最后发现寄存器名字敲串了的同学）
 
 于是，加入了 `debug` 模式。在 `debug` 模式中，程序输出更多信息至屏幕，并且可以在运行过程中指定的一些行暂停程序，进行变量的查看。具体使用方法见下文。
 
@@ -159,6 +160,12 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 2. 对未被定义的命令进行了判断并抛出异常，帮助编码者在自己拼错命令的时候快速 debug。
 3. 对可能出现的寄存器名称不存在的命令进行了判断并抛出异常，防止程序解析错了我们也不知道。
 
+### 关于外部代码使用
+
+本项目没有使用其他语言的任何代码。
+
+本项目使用了一系列 C++ 标准库，包括 `cstring` ，`iostream`，`cstdio`  ，`ctime` ，`fstream` ，`iomanip` ，`sstream` ，`string` ，`unordered_map` 。
+
 ## 使用说明
 
 ### 关于项目编译
@@ -167,11 +174,11 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 `makefile` 编译出来的可执行文件放在 `./bin/main` 处。
 
-或者直接编译 `main.cpp` 亦可。
+或直接编译 `main.cpp` 亦可。
 
 ### 关于 `main.cpp` 的主函数使用
 
-包括可执行文件本身，`main.cpp` 接收三～四个参数：
+包括可执行文件本身，`main.cpp` 接收三至四个参数：
 
 1. 第一个参数是可执行文件本身
 2. 第二个参数是执行任务类型【只有第一个字母有意义】
@@ -190,7 +197,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 需要注意：
 
-+ `main.cpp` 中使用 `mkdir` 和 `rm` 的命令行命令来创建输出文件存储路径，需要保证命令行上有这两个命令。
++ `main.cpp` 中使用 `mkdir` 和 `rm` 的命令行命令来创建输出文件存储路径，需要保证命令行有上述这两个命令。
 
 ### 关于 `debug` 模式的使用
 
@@ -200,7 +207,7 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 #### 如何设置断点
 
-在某行最后放置一个 `*` 字符，后面**直接**连接  `\n` 或 `/ ...`。（注意，断点只有在 `debug` 模式下才能生效）
+在某行最后放置一个 `*` 字符，后面**直接**连接  `\n` 或 `/ ...`。（注意，断点只有在 `debug` 模式下才能生效！）
 
 #### 如何在断点处做一些事情
 
@@ -209,20 +216,19 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 | 操作       | 命令                | 说明                 |
 | ---------- | ------------------- | -------------------- |
 | 查看帮助   | `?`                 | 无                   |
-| 继续运行   | `!`                 | 无                   |
+| 退出查看 | `!`                 | 无                   |
 | 查看寄存器 | `fp`/`zero`/`x31`   | 直接输入寄存器名即可 |
 | 查看内存   | `0x3f 123`/`100000 1` | 第一个参数可以是16进制数，也可以是10进制数<br/>第二个参数代表字节数 |
-| 查看栈 | `stack 1`/`stack 123` | 第一个参数必须是 `stack` <br/>第二个参数是要查看的元素个数 |
-| 增加断点 | `add x` | 在第 $x$ 行处增加一个断点（注意是以 0 为开始行） |
+| 查看栈 | `stack 1`/`stack 123` | 第一个参数必须是 `stack` <br/>第二个参数是从顶向下要查看的元素个数 |
+| 增加断点 | `add x` | 在第 $x$ 行处增加断点（注意是以 0 为开始行） |
 | 去除断点 | `del x` | 在第 $x$ 行处去掉断点（注意是以 0 为开始行） |
 | 结束调试 | `disable` | 关闭 `debug` 模式，结束这次断点后将不会再进入任何断点。 |
 
 ### 其他注意事项
 
-1. 函数等定义应该放在最后，否则会出问题。
-2. ERISC 源代码最大 10000 行，如果超出将只阅读前 10000 行。
-3. ERISC 源代码只支持 ASCII码。
-4. ERISC 源代码每行不能超过 100个字符。
+1. ERISC 源代码最大 10000 行，如果超出将只阅读前 10000 行。
+2. ERISC 源代码只支持 ASCII 码。
+3. ERISC 源代码每行不能超过 100 个字符。
 
 ## 具体实现解读
 
@@ -232,13 +238,13 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 
 `Num` 类主要用来表示每行命令中的参数。
 
- `Num` 类中包含 `bool type` 和 `unsigned int val` 两个变量；如果 `type` 是 1 代表这就是 “数”，否则代表的是一个寄存器的编号。
+`Num` 类中包含 `bool type` 和 `unsigned int val` 两个变量；如果 `type` 是 1 代表这就是 “数”，否则代表这是一个寄存器的编号。
 
 #### “行”：Line 类
 
 `Line` 类主要用来表示每行的命令及参数。
 
- `Line` 类中包含 `short type` ，表示命令类型；包含 `Num args[3]` ，表示可能出现的三个参数。
+`Line` 类中包含 `short type` ，表示命令类型；包含 `Num args[3]` ，表示可能出现的三个参数。
 
 用宏定义的方法将命令类型映射到 `short`范围内的一个整数。
 
@@ -261,9 +267,9 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 主要由两个函数组成：
 
 + `void parse_file(const char *FILENAME)` ，进行总体的解释，调用下面的函数。
-  + 这里最难的是处理 `line_symbol` 在其调用之后出现的问题。我们采用建一个数组 `unfounded_line` 来储存这样的调用行，在所有行均处理完之后再对这些行进行处理
+  + 这里最难的是处理 `line_symbol` 出现在其首次调用之后出现的问题。我们建了一个数组 `unfounded_line` 来储存这样的调用行，在所有行均处理完之后再对这些行进行处理。
 + `void parse(const char *script, Line & line, const int current_line, bool unfounded)`，进行每一行具体的解释，存储到 `line` 变量中。
-  + 其中使用 `unordered_map` 来解析名称，通过 `get_arg, add_arg` 函数来从文本中读取并添加参数至 `Line` 中。
+  + 其中使用 `unordered_map` 来解析名称至数字，通过 `get_arg, add_arg` 函数来从文本中读取并添加参数至 `Line` 中。
 
 #### 运行：execute 阶段
 
@@ -278,3 +284,10 @@ A C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer), which
 主要在 `void debug_watch();` 模式中进行。
 
 用户输入的命令经过条件判断后得到反馈。
+
+## 一些不宜直接上传于 GitHub的信息
+
+pdf版文档：https://cloud.tsinghua.edu.cn/f/4531f974c4654bf296c2/?dl=1
+演示视频：https://cloud.tsinghua.edu.cn/f/43adc88c607e4762aa09/?dl=1
+
+失效后如需要，请索取。

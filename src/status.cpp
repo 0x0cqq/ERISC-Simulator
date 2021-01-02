@@ -28,7 +28,7 @@ Status::~Status() {}
 // print `cnt` bytes using hex, start from `scr+_start`, with beautiful syntax
 void print_bytes(unsigned char *scr, unsigned int _start, unsigned int cnt) {
     for(unsigned int i = 0; i < cnt; i++) {
-        if(i % 16 == 0) { // header
+        if(i % 16 == 0) {  // header
             std::cout << std::endl;
             std::cout << std::setiosflags(std::ios::uppercase) << std::setw(6)
                       << std::setfill('0') << std::setprecision(8) << std::hex
@@ -43,7 +43,7 @@ void print_bytes(unsigned char *scr, unsigned int _start, unsigned int cnt) {
 // print `cnt` bytes in array memory[] from memory[start_pos]
 int Status::print_memory(unsigned int start_pos, unsigned int cnt) {
     if(start_pos > MEMORY_SIZE || start_pos + cnt > MEMORY_SIZE) {
-        return -1; // overflow
+        return -1;  // overflow
     }
     else {
         std::cout << "start_pos:" << start_pos << " cnt:" << cnt << std::endl;
@@ -61,7 +61,7 @@ int Status::print_stack(unsigned int cnt) {
     if((long long)stack_ptr + (long long)cnt >
        (long long)stack + (long long)STACK_SIZE) {
         std::cout << std::endl;
-        return -1; // overflow
+        return -1;  // overflow
     }
     else {
         std::cout << std::endl << "--[top--->bottom]--";
@@ -176,7 +176,9 @@ void Status::print_to_txt(const char *FILENAME) {
         f_out << std::setiosflags(std::ios::uppercase) << std::setw(2)
               << std::setfill('0') << std::setprecision(8) << std::hex
               << (unsigned short)memory[i];
-        f_out << (i % LINE_LEN == LINE_LEN - 1 ? "\n" : " "); // no trailing space at line's end
+        f_out << (i % LINE_LEN == LINE_LEN - 1 ?
+                      "\n" :
+                      " ");  // no trailing space at line's end
     }
     f_out.close();
     return;
