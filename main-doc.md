@@ -28,7 +28,7 @@ This is a C++ simulator of the ERISC (Extremely Reduced Instruction Set Computer
 
 合影：
 
-![](photo.jpg)
+[See Photo](photo.jpg)
 
 | 姓名   | 班级   | 学号 | 分工                                                         |
 | ------ | ------ | ---- | ------------------------------------------------------------ |
