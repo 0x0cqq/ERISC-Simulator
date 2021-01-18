@@ -22,7 +22,10 @@ class Status {
         unsigned short   reg_rw[Status::REGISTER_NUM];
         bool             mem_rw[Status::MEMORY_SIZE / MEMORY_BLOCK_SIZE];
         bool             stack_rw;
-        Output_status() {
+        Output_status(){
+            reset();
+        }
+        void reset() {
             for(int i = 0; i < Status::REGISTER_NUM; i++) {
                 reg_rw[i] = 0;
             }

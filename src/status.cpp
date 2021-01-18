@@ -161,6 +161,7 @@ void Status::print_to_bmp(const char *FILENAME) {
     BMP *bmp = new BMP;
     bmp->print(FILENAME, output_status.reg_rw, output_status.mem_rw,
                output_status.stack_rw);
+    output_status.reset();
     delete bmp;
 }
 // output current state to `FILENAME`
